@@ -13,5 +13,5 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "templates/HomePage.html")
+	http.ServeFile(w, r, "templates/index.html")
 }

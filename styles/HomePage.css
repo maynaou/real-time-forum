@@ -14,20 +14,21 @@ body {
 
 .content {
     text-align: center;
-    background: white;
-    padding: 20px;
+    background: #fff;
+    padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
     font-size: 2.5em;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    color: #333;
 }
 
 .subtext {
-    color: #555;
-    margin: 5px 0;
+    color: #666;
+    margin: 10px 0;
 }
 
 .buttons {
@@ -35,17 +36,35 @@ h1 {
 }
 
 .btn {
-    padding: 10px 20px;
+    padding: 10px 15px;
     margin: 5px;
     border: none;
     border-radius: 5px;
     background-color: #007BFF;
-    color: white;
+    color: #fff;
     font-size: 1em;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
 }
 
 .btn:hover {
     background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+p {
+    margin-top: 15px;
+}
+
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
