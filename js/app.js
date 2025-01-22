@@ -1,21 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
-    showHomePage(); // Afficher la page d'accueil par défaut
+    new ShowHomePage();
 
     document.body.addEventListener('click', function (event) {
         if (event.target.matches('#showRegister')) {
-            showRegisterForm();
+            new RegisterForm(); 
         } else if (event.target.matches('#showLogin')) {
-            showLoginForm();
+            new LoginForm(); 
         } else if (event.target.matches('#showHome')) {
-            showHomePage(); // Optionnel : pour un bouton de retour à la page d'accueil
+            new ShowHomePage(); 
         }
     });
 });
 
-// Afficher la page d'accueil
-function showHomePage() {
-    const content = `
-        <div class="content">
+class ShowHomePage {
+    constructor() {
+        this.element = document.createElement('div');
+        this.element.className = 'content';
+        document.getElementById('formContainer').appendChild(this.element);
+        this.showHomePage();
+    }
+
+    showHomePage() {
+        const content = `
             <h1>WELCOME TO REAL-TIME-FORUM</h1>
             <p class="subtext">Join our community and explore new ideas</p>
             <p class="subtext">Connect, share, and learn with fellow enthusiasts</p>
@@ -24,27 +30,34 @@ function showHomePage() {
                 <button class="btn" id="showRegister">Sign Up</button>
                 <button class="btn" onclick="window.location.href = '/guest'">Guest</button>
             </div>
-        </div>
-    `;
-    document.getElementById('formContainer').innerHTML = content; // Mettre à jour le conteneur avec le contenu de la page d'accueil
+        `;
+        this.element.innerHTML = content; 
+    }
 }
 
-// Afficher le formulaire de connexion
-function showLoginForm() {
-    const formContainer = document.getElementById('formContainer');
-    formContainer.innerHTML = `
-        <h1>Connexion</h1>
-        <form id="loginForm">
-            <input type="text" name="identifier" placeholder="Nickname or E-mail" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Log In</button>
-        </form>
-        <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
-    `;
+class LoginForm {
+    constructor() {
+        this.render();
+    }
 
-    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+    render() {
+        const formContainer = document.getElementById('formContainer');
+        formContainer.innerHTML = `
+            <h1>Connexion</h1>
+            <form id="loginForm">
+                <input type="text" name="identifier" placeholder="Nickname or E-mail" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Log In</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
+        `;
+
+        document.getElementById('loginForm').addEventListener('submit', this.handleSubmit.bind(this));
+    }
+
+    async handleSubmit(event) {
         event.preventDefault();
-        const formData = new FormData(this);
+        const formData = new FormData(event.target);
         const data = Object.fromEntries(formData);
 
         try {
@@ -62,40 +75,46 @@ function showLoginForm() {
             }
 
             alert('Login successful!');
-            showHomePage(); // Retour à la page d'accueil après connexion réussie
-
+            new ShowHomePage(); 
         } catch (error) {
             alert(error.message);
         }
-    });
+    }
 }
 
-// Afficher le formulaire d'inscription
-function showRegisterForm() {
-    const formContainer = document.getElementById('formContainer');
-    formContainer.innerHTML = `
-        <h1>Inscription</h1>
-        <form id="registerForm">
-            <input type="text" name="nickname" placeholder="Nickname" required>
-            <input type="number" name="age" placeholder="Age" required>
-            <select name="gender" required>
-                <option value="" disabled selected>Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-            </select>
-            <input type="text" name="firstName" placeholder="First Name" required>
-            <input type="text" name="lastName" placeholder="Last Name" required>
-            <input type="email" name="email" placeholder="E-mail" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="#" id="showLogin">Log in</a></p>
-    `;
+class RegisterForm {
+    constructor() {
+        this.render();
+    }
 
-    document.getElementById('registerForm').addEventListener('submit', async function (event) {
+    render() {
+        const formContainer = document.getElementById('formContainer');
+        formContainer.innerHTML = `
+            <h1>Inscription</h1>
+            <form id="registerForm">
+                <input type="text" name="nickname" placeholder="Nickname" required>
+                <input type="number" name="age" placeholder="Age" required>
+                <select name="gender" required>
+                    <option value="" disabled selected>Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                <input type="text" name="firstName" placeholder="First Name" required>
+                <input type="text" name="lastName" placeholder="Last Name" required>
+                <input type="email" name="email" placeholder="E-mail" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Register</button>
+            </form>
+            <p>Already have an account? <a href="#" id="showLogin">Log in</a></p>
+        `;
+
+        document.getElementById('registerForm').addEventListener('submit', this.handleSubmit.bind(this));
+    }
+
+    async handleSubmit(event) {
         event.preventDefault();
-        const formData = new FormData(this);
+        const formData = new FormData(event.target);
         const data = Object.fromEntries(formData);
 
         try {
@@ -113,10 +132,9 @@ function showRegisterForm() {
             }
 
             alert('Registration successful!');
-            showHomePage(); // Retour à la page d'accueil après inscription réussie
-
+            new ShowHomePage();
         } catch (error) {
             alert(error.message);
         }
-    });
+    }
 }
