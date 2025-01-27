@@ -2,11 +2,13 @@ package userdata
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	database "handler/DataBase"
 	handler "handler/handlers"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,11 +18,16 @@ type RegisterRequest struct {
 	Password  string `json:"password"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
-	Age       string `json:"age"`
+	Age       int    `json:"age"`
 	Gender    string `json:"gender"`
 }
 
+type JsonResponse struct {
+	Message string `json:"message"`
+}
+
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("jjjjj2")
 	if r.Method != http.MethodPost {
 		handler.ShowErrorPage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -32,13 +39,13 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validation des champs requis
+	fmt.Println(req)
+
 	if req.Nickname == "" || req.Email == "" || req.Password == "" {
 		handler.ShowErrorPage(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
-	// Vérification des doublons d'utilisateur
 	var exists bool
 	err := database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? OR email = ?)",
 		req.Nickname, req.Email).Scan(&exists)
@@ -51,24 +58,25 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hachage du mot de passe
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		handler.ShowErrorPage(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 
-	// Insertion de l'utilisateur dans la base de données
+	userID := uuid.New().String()
+
 	_, err = database.DB.Exec(`
-        INSERT INTO users (nickname, email, password, first_name, last_name, age, gender)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		req.Nickname, req.Email, hashedPass, req.FirstName, req.LastName, req.Age, req.Gender)
+        INSERT INTO users (id,nickname, email, password, first_name, last_name, age, gender)
+        VALUES (?,?, ?, ?, ?, ?, ?, ?)`,
+		userID, req.Nickname, req.Email, hashedPass, req.FirstName, req.LastName, req.Age, req.Gender)
 	if err != nil {
 		handler.ShowErrorPage(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
-	// Réponse de succès
+	response := JsonResponse{Message: "User created successfully"}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User created successfully"))
+	json.NewEncoder(w).Encode(response)
 }

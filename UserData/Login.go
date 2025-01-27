@@ -2,6 +2,7 @@ package userdata
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -29,6 +30,8 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(req)
+
 	var user struct {
 		ID       string
 		Password string
@@ -36,7 +39,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := database.DB.QueryRow(`
 	SELECT id, password FROM users WHERE email = ? OR nickname = ?
-	`, req.Login, req.Login).Scan(&user.ID, &user.Password) // Correction ici
+	`, req.Login, req.Login).Scan(&user.ID, &user.Password)
 	if err != nil {
 		handler.ShowErrorPage(w, "Invalid credentials", http.StatusUnauthorized)
 		return

@@ -49,7 +49,7 @@ class LoginForm {
                         <div class="content">
                             <h2>Log In</h2>
                             <form id="loginForm">
-                                <input type="text" name="username" placeholder="User Name" required autofocus>
+                                <input type="text" name="login" placeholder="Nickname or Email" required autofocus>
                                 <input type="password" name="password" placeholder="Password" required>
                                 <button class="btn" type="submit">Login</button>
                             </form>
@@ -71,22 +71,19 @@ class LoginForm {
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData);
 
+        console.log(data);
+        
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
-                body: JSON.stringify(data),
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify(data),
             });
 
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.error || 'Login failed');
-            }
-
             alert('Login successful!');
-            new ShowHomePage();
+            new ForumPage();
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -137,37 +134,180 @@ class RegisterForm {
     async handleSubmit(event) {
         event.preventDefault();
         const formData = new FormData(event.target);
-        // const data = Object.fromEntries(formData);
-        console.log("data",data.email)
-        console.log("formadate",formData)
         const data = {
-            nickname: "exampleUser",
-            email: "user@example.com",
-            password: "securePassword123",
-            firstName: "First",
-            lastName: "Last",
-            age: 25,  // Assurez-vous que c'est un nombre
-            gender: "male"
+            ...Object.fromEntries(formData),
+            age: parseInt(formData.get('age'), 10)
         };
 
         try {
-           
             const response = await fetch('/api/register', {
-               
                 method: 'POST',
-                body: JSON.stringify(data),
                 headers: {
                     'Content-Type': 'application/json'
-                }
-            } );
+                },
+                body: JSON.stringify(data),
+            });
+            console.log("ggggggg1")
+
             const result = await response.json();
             if (!response.ok) {
-               
-                throw new Error(result.error || 'Registration failed');
+                throw new Error(result.message || 'Registration failed');
             }
 
+            console.log("ffffff3")
+
             alert('Registration successful!');
-            new ShowHomePage();
+            new LoginForm();
+        } catch (error) {
+            console.log("Error:", error.message);
+            alert('Error: ' + error.message);
+        }
+    }
+}
+
+
+
+class ForumPage {
+    constructor() {
+        this.posts = [];
+        this.render();
+    }
+
+    render() {
+        const forumContainer = document.getElementById('formContainer');
+        forumContainer.innerHTML = `
+            <div class="forum-page">
+                <h1>Forum</h1>
+                <button id="logoutButton" class="btn">Logout</button> <!-- Bouton de déconnexion -->
+                <div class="post-form">
+                    <h2>Create a Post</h2>
+                    <form id="postForm">
+                        <input type="text" name="title" placeholder="Post Title" required>
+                        <textarea name="content" placeholder="Post Content" required></textarea>
+                        <select name="categories" multiple required>
+                            <option value="General">General</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Health">Health</option>
+                        </select>
+                        <button class="btn" type="submit">Submit Post</button>
+                    </form>
+                </div>
+                <div class="filter-section">
+                    <h2>Filter Posts</h2>
+                    <button id="filterByCategory">Filter by Category</button>
+                    <button id="filterByLikes">Filter by Liked Posts</button>
+                </div>
+                <div id="postsContainer">
+                    <h2>Posts</h2>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
+        document.getElementById('filterByCategory').addEventListener('click', this.filterByCategory.bind(this));
+        document.getElementById('filterByLikes').addEventListener('click', this.filterByLikes.bind(this));
+        document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
+    }
+
+    async handlePostSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = {
+            title: formData.get('title'),
+            content: formData.get('content'),
+            categories: Array.from(formData.getAll('categories')),
+            likes: 0,
+            dislikes: 0,
+        };
+
+        // Simulate API call to save the post
+        this.posts.push(data);
+        this.displayPosts();
+        event.target.reset();
+    }
+
+    displayPosts() {
+        const postsContainer = document.getElementById('postsContainer');
+        postsContainer.innerHTML = '';
+
+        this.posts.forEach((post, index) => {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <p>Categories: ${post.categories.join(', ')}</p>
+                <p>Likes: ${post.likes} | Dislikes: ${post.dislikes}</p>
+                <button onclick="forumPage.likePost(${index})">Like</button>
+                <button onclick="forumPage.dislikePost(${index})">Dislike</button>
+            `;
+            postsContainer.appendChild(postElement);
+        });
+    }
+
+    likePost(index) {
+        this.posts[index].likes += 1;
+        this.displayPosts();
+    }
+
+    dislikePost(index) {
+        this.posts[index].dislikes += 1;
+        this.displayPosts();
+    }
+
+    filterByCategory() {
+        // Implement filtering logic by categories
+        const category = prompt("Enter category to filter:");
+        const filteredPosts = this.posts.filter(post => post.categories.includes(category));
+        this.displayFilteredPosts(filteredPosts);
+    }
+
+    filterByLikes() {
+        // Implement filtering logic for liked posts
+        const likedPosts = this.posts.filter(post => post.likes > 0);
+        this.displayFilteredPosts(likedPosts);
+    }
+
+    displayFilteredPosts(filteredPosts) {
+        const postsContainer = document.getElementById('postsContainer');
+        postsContainer.innerHTML = '';
+
+        filteredPosts.forEach((post, index) => {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <p>Categories: ${post.categories.join(', ')}</p>
+                <p>Likes: ${post.likes} | Dislikes: ${post.dislikes}</p>
+                <button onclick="forumPage.likePost(${index})">Like</button>
+                <button onclick="forumPage.dislikePost(${index})">Dislike</button>
+            `;
+            postsContainer.appendChild(postElement);
+        });
+   
+    }
+
+   
+    async handleLogout() {
+        try {
+            
+            const response = await fetch('/api/logout', {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json()
+            if (!response.ok) {
+                throw new Error(result || 'Logout failed');
+            }
+    
+            alert("You have been logged out.");
+            const forumContainer = document.getElementById('formContainer');
+            forumContainer.innerHTML = '';
+            new ShowHomePage(); 
         } catch (error) {
             alert('Error: ' + error.message);
         }
