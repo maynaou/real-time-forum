@@ -1,21 +1,10 @@
 package database
 
 import (
-	"database/sql"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var DB *sql.DB
-
 func InitDB() error {
-	var err error
-
-	DB, err = sql.Open("sqlite3", "./forum.db")
-	if err != nil {
-		return err
-	}
-
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
@@ -69,9 +58,9 @@ func InitDB() error {
         );`,
 	}
 
-	// Execute each query
+	db := GetDatabaseInstance().DB
 	for _, query := range queries {
-		if _, err := DB.Exec(query); err != nil {
+		if _, err := db.Exec(query); err != nil {
 			return err
 		}
 	}

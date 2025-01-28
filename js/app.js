@@ -49,7 +49,7 @@ class LoginForm {
                         <div class="content">
                             <h2>Log In</h2>
                             <form id="loginForm">
-                                <input type="text" name="login" placeholder="Nickname or Email" required autofocus>
+                                <input type="text" name = "NicknameOREmail"  placeholder="Nickname or Email" required autofocus>
                                 <input type="password" name="password" placeholder="Password" required>
                                 <button class="btn" type="submit">Login</button>
                             </form>
@@ -66,21 +66,41 @@ class LoginForm {
         document.getElementById('loginForm').addEventListener('submit', this.handleSubmit.bind(this));
     }
 
+
     async handleSubmit(event) {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData);
+        let user = {}
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.NicknameOREmail);
+        if (isEmail) {
+            user = {
+                email: data.NicknameOREmail,
+                password : data.password,
+            }
+        }else {
+            user = {
+              nickname : data.NicknameOREmail,
+              password : data.password,
+            }
+        }
 
-        console.log(data);
-        
+
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(user),
             });
+
+            const result = response.json()
+            console.log(result.message)
+            if (!response.ok) {
+                throw new Error(result.message || 'login failed');
+            }
+
 
             alert('Login successful!');
             new ForumPage();
@@ -134,10 +154,10 @@ class RegisterForm {
     async handleSubmit(event) {
         event.preventDefault();
         const formData = new FormData(event.target);
-        const data = {
-            ...Object.fromEntries(formData),
-            age: parseInt(formData.get('age'), 10)
-        };
+        const data = Object.fromEntries(formData)
+
+        console.log(data);
+
 
         try {
             const response = await fetch('/api/register', {
@@ -147,14 +167,14 @@ class RegisterForm {
                 },
                 body: JSON.stringify(data),
             });
-            console.log("ggggggg1")
 
             const result = await response.json();
+            console.log(result.message)
             if (!response.ok) {
                 throw new Error(result.message || 'Registration failed');
             }
 
-            console.log("ffffff3")
+
 
             alert('Registration successful!');
             new LoginForm();
@@ -285,15 +305,15 @@ class ForumPage {
             `;
             postsContainer.appendChild(postElement);
         });
-   
+
     }
 
-   
+
     async handleLogout() {
         try {
-            
+
             const response = await fetch('/api/logout', {
-                method: 'POST', 
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -303,11 +323,11 @@ class ForumPage {
             if (!response.ok) {
                 throw new Error(result || 'Logout failed');
             }
-    
+
             alert("You have been logged out.");
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
-            new ShowHomePage(); 
+            new ShowHomePage();
         } catch (error) {
             alert('Error: ' + error.message);
         }

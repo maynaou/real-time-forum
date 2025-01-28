@@ -3,19 +3,14 @@ package userdata
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
-
-	database "handler/DataBase"
+	models "handler/DataBase/Models"
+	utils "handler/Utils"
 	handler "handler/handlers"
-
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+	"net/http"
 )
 
-type LoginRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+type LoginResponse struct {
+	Message string `json:"message"`
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -24,48 +19,53 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req LoginRequest
+	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		handler.ShowErrorPage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println(req)
-
-	var user struct {
-		ID       string
-		Password string
+	NicknameOREmail := req.Nickname
+	if NicknameOREmail == "" {
+		NicknameOREmail = req.Email
 	}
 
-	err := database.DB.QueryRow(`
-	SELECT id, password FROM users WHERE email = ? OR nickname = ?
-	`, req.Login, req.Login).Scan(&user.ID, &user.Password)
-	if err != nil {
-		handler.ShowErrorPage(w, "Invalid credentials", http.StatusUnauthorized)
+	validationErrors := utils.ValidateLoginFormInput(NicknameOREmail, req.Password)
+	if len(validationErrors) > 0 {
+		handler.ShowErrorPage(w, "Invalid form input", http.StatusBadRequest)
+		fmt.Printf("Validatio errors: %v", validationErrors)
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	user, err := models.GetUserDetails(req)
+	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		fmt.Println("Invalid credentials")
 		return
 	}
+	if (user.Nickname == req.Nickname || user.Email == req.Email) && utils.ComparePasswords(user.Password, req.Password) {
+		_, err := utils.SetSession(w, r, user.UserID)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			fmt.Printf("Error setting session: %v", err)
+			return
+		}
 
-	sessionID := uuid.New().String()
-	expiresAt := time.Now().Add(24 * time.Hour)
+		response := LoginResponse{
+			Message: "Login successful",
+		}
 
-	_, err = database.DB.Exec(`
-        INSERT INTO sessions (id, user_id, expires_at) 
-        VALUES (?, ?, ?)`,
-		sessionID, user.ID, expiresAt)
-	if err != nil {
-		http.Error(w, "Failed to create session", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+			fmt.Printf("Error encoding JSON: %v", err)
+			return
+		}
+	} else {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		fmt.Println("Invalid credentials")
 		return
 	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_id",
-		Value:   sessionID,
-		Path:    "/",
-		Expires: expiresAt,
-	})
 }

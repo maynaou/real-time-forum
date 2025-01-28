@@ -3,80 +3,81 @@ package userdata
 import (
 	"encoding/json"
 	"fmt"
+	models "handler/DataBase/Models"
+	utils "handler/Utils"
+	handler "handler/handlers"
 	"net/http"
 
-	database "handler/DataBase"
-	handler "handler/handlers"
-
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
-
-type RegisterRequest struct {
-	Nickname  string `json:"nickname"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
-}
 
 type JsonResponse struct {
 	Message string `json:"message"`
 }
 
 func HandleRegister(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("jjjjj2")
 	if r.Method != http.MethodPost {
 		handler.ShowErrorPage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req RegisterRequest
+	var req models.RegisterRequest
+	req.ID = uuid.New().String()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		handler.ShowErrorPage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println(req)
-
-	if req.Nickname == "" || req.Email == "" || req.Password == "" {
+	validationErrors := utils.ValidateRegisterFornData(req)
+	if len(validationErrors) > 0 {
 		handler.ShowErrorPage(w, "Missing required fields", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(validationErrors); err != nil {
+			fmt.Printf("Failed to encode validation errors: %v", err)
+		}
 		return
 	}
 
-	var exists bool
-	err := database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE nickname = ? OR email = ?)",
-		req.Nickname, req.Email).Scan(&exists)
-	if err != nil {
-		handler.ShowErrorPage(w, "Database error", http.StatusInternalServerError)
-		return
-	}
-	if exists {
-		handler.ShowErrorPage(w, "User already exists", http.StatusConflict)
-		return
-	}
-
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPass, err := utils.HashPassword(req.Password)
 	if err != nil {
 		handler.ShowErrorPage(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
+	req.Password = string(hashedPass)
+	_, err = models.CreateUser(req)
 
-	userID := uuid.New().String()
-
-	_, err = database.DB.Exec(`
-        INSERT INTO users (id,nickname, email, password, first_name, last_name, age, gender)
-        VALUES (?,?, ?, ?, ?, ?, ?, ?)`,
-		userID, req.Nickname, req.Email, hashedPass, req.FirstName, req.LastName, req.Age, req.Gender)
 	if err != nil {
-		handler.ShowErrorPage(w, "Failed to create user", http.StatusInternalServerError)
+		handler.ShowErrorPage(w, "Database error", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		errorMsg := map[string]string{"error": "Username or email already exists."}
+		if err := json.NewEncoder(w).Encode(errorMsg); err != nil {
+			fmt.Printf("Failed to encode error message: %v", err)
+		}
 		return
 	}
 
-	response := JsonResponse{Message: "User created successfully"}
+	/*data, err := json.Marshal(req)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Printf("Failed to marshal user data: %v", err)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	if _, err := w.Write(data); err != nil {
+		fmt.Printf("Failed to write response data: %v", err)
+	}*/
+
+	response := JsonResponse{
+		Message: "register successful",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+		fmt.Printf("Error encoding JSON: %v", err)
+		return
+	}
 }
