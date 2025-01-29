@@ -10,7 +10,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8088"
+var port = "8084"
 
 func main() {
 	db := database.GetDatabaseInstance()

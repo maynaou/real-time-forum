@@ -95,7 +95,7 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
-            const result = response.json()
+            const result =await response.json()
             console.log(result.message)
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
@@ -156,8 +156,6 @@ class RegisterForm {
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData)
 
-        console.log(data);
-
 
         try {
             const response = await fetch('/api/register', {
@@ -190,43 +188,98 @@ class RegisterForm {
 class ForumPage {
     constructor() {
         this.posts = [];
+        this.selectedCategories = [];
+        this.maxCategories = 3; 
         this.render();
     }
 
     render() {
         const forumContainer = document.getElementById('formContainer');
         forumContainer.innerHTML = `
-            <div class="forum-page">
-                <h1>Forum</h1>
-                <button id="logoutButton" class="btn">Logout</button> <!-- Bouton de déconnexion -->
-                <div class="post-form">
-                    <h2>Create a Post</h2>
-                    <form id="postForm">
-                        <input type="text" name="title" placeholder="Post Title" required>
-                        <textarea name="content" placeholder="Post Content" required></textarea>
-                        <select name="categories" multiple required>
-                            <option value="General">General</option>
-                            <option value="Technology">Technology</option>
-                            <option value="Health">Health</option>
-                        </select>
-                        <button class="btn" type="submit">Submit Post</button>
-                    </form>
-                </div>
-                <div class="filter-section">
-                    <h2>Filter Posts</h2>
-                    <button id="filterByCategory">Filter by Category</button>
-                    <button id="filterByLikes">Filter by Liked Posts</button>
-                </div>
-                <div id="postsContainer">
-                    <h2>Posts</h2>
-                </div>
+            <div class="user">
+                <h1>Real-Time-Forum</h1>
+                <button id="logoutButton">Logout</button>
+            </div>
+            <div class="post-form">
+                <form id="postForm">
+                    <input type="text" name="title" placeholder="Title:" required>
+                    <textarea name="content" placeholder="What is happening?!" required></textarea>
+                    <div id="categoriesContainer"></div> <!-- Category selection here -->
+                    <button id="submit" type="submit">Post</button>
+                </form>
+            </div>
+            <div class="filter-section">
+                <h2>Filter Posts</h2>
+                <button id="filterByCategory">Filter by Category</button>
+                <button id="filterByLikes">Filter by Liked Posts</button>
+            </div>
+            <div id="postsContainer">
+                <h2>Posts</h2>
             </div>
         `;
+
+        this.renderCategories(); // Call to render category checkboxes
 
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
         document.getElementById('filterByCategory').addEventListener('click', this.filterByCategory.bind(this));
         document.getElementById('filterByLikes').addEventListener('click', this.filterByLikes.bind(this));
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
+    }
+
+    renderCategories() {
+        const categories = [
+            { name: "Tech", color: "rgb(25, 195, 125)" },
+            { name: "Finance", color: "rgb(255, 85, 85)" },
+            { name: "Health", color: "rgb(30, 144, 255)" },
+            { name: "Startup", color: "rgb(255, 215, 0)" },
+            { name: "Innovation", color: "rgb(148,0,211)" },
+        ];
+
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        categoriesContainer.innerHTML = '';
+
+        categories.forEach((category) => {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.name = "category";
+            checkbox.value = category.name;
+            checkbox.id = category.name;
+
+            const label = document.createElement("label");
+            label.append(document.createTextNode(category.name));
+            label.style.backgroundColor = category.color;
+            label.classList.add("category-label");
+
+            checkbox.addEventListener("change", () => {
+                this.handleCategoryChange(checkbox);
+            });
+
+            categoriesContainer.append(checkbox, label);
+        });
+    }
+
+    handleCategoryChange(checkbox) {
+        if (checkbox.checked) {
+            if (this.selectedCategories.length < this.maxCategories) {
+                this.selectedCategories.push(checkbox.value);
+            } else {
+                checkbox.checked = false; 
+            }
+        } else {
+            const index = this.selectedCategories.indexOf(checkbox.value);
+            if (index > -1) {
+                this.selectedCategories.splice(index, 1);
+            }
+        }
+
+        const checkboxes = document.querySelectorAll('#categoriesContainer input[type="checkbox"]');
+        checkboxes.forEach(box => {
+            if (!box.checked && this.selectedCategories.length >= this.maxCategories) {
+                box.disabled = true;
+            } else {
+                box.disabled = false;
+            }
+        });
     }
 
     async handlePostSubmit(event) {
@@ -235,7 +288,7 @@ class ForumPage {
         const data = {
             title: formData.get('title'),
             content: formData.get('content'),
-            categories: Array.from(formData.getAll('categories')),
+            categories: [...this.selectedCategories], // Use selected categories
             likes: 0,
             dislikes: 0,
         };
@@ -244,6 +297,8 @@ class ForumPage {
         this.posts.push(data);
         this.displayPosts();
         event.target.reset();
+        this.selectedCategories = []; // Reset categories after submission
+        this.renderCategories(); // Re-render categories to reset checkboxes
     }
 
     displayPosts() {
@@ -276,14 +331,12 @@ class ForumPage {
     }
 
     filterByCategory() {
-        // Implement filtering logic by categories
         const category = prompt("Enter category to filter:");
         const filteredPosts = this.posts.filter(post => post.categories.includes(category));
         this.displayFilteredPosts(filteredPosts);
     }
 
     filterByLikes() {
-        // Implement filtering logic for liked posts
         const likedPosts = this.posts.filter(post => post.likes > 0);
         this.displayFilteredPosts(likedPosts);
     }
@@ -305,13 +358,10 @@ class ForumPage {
             `;
             postsContainer.appendChild(postElement);
         });
-
     }
-
 
     async handleLogout() {
         try {
-
             const response = await fetch('/api/logout', {
                 method: 'GET',
                 headers: {
@@ -319,7 +369,7 @@ class ForumPage {
                 },
             });
 
-            const result = await response.json()
+            const result = await response.json();
             if (!response.ok) {
                 throw new Error(result || 'Logout failed');
             }
