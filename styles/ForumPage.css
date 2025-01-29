@@ -110,6 +110,25 @@ input:focus {
     padding: 3em;
 }
 
+.register-form input,
+.register-form select {
+    outline: none;
+    margin-bottom: 15px;
+    padding: 14px 20px;
+    width: 100%;
+    border: none;
+    border-radius: 35px;
+    background: #f7fafc;
+    transition: 0.3s ease;
+}
+
+.register-form input:focus,
+.register-form select:focus {
+    background: transparent;
+    border: 1px solid #4e34b6;
+}
+
+
 .user {
     display: flex;
     justify-content: space-between;
