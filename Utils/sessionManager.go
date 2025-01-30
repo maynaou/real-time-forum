@@ -111,6 +111,7 @@ func GetUserFromSession(r *http.Request) (models.RegisterRequest, bool) {
 		return models.RegisterRequest{}, false
 	}
 
+
 	database := database.GetDatabaseInstance()
 	if database == nil || database.DB == nil {
 		fmt.Printf("Database connection error")
@@ -125,7 +126,7 @@ func GetUserFromSession(r *http.Request) (models.RegisterRequest, bool) {
 	}
 
 	var user models.RegisterRequest
-	err = database.DB.QueryRow(`SELECT id, username, first_name, last_name, email, age, password, gender, created_at, updated_at FROM users WHERE id = ?`, userID).Scan(&user.ID, &user.Nickname, &user.FirstName, &user.LastName, &user.Email, &user.Age, &user.Password, &user.Gender)
+	err = database.DB.QueryRow(`SELECT id, nickname, first_name, last_name, email, age, password, gender FROM users WHERE id = ?`, userID).Scan(&user.ID, &user.Nickname, &user.FirstName, &user.LastName, &user.Email, &user.Age, &user.Password, &user.Gender)
 	if err != nil {
 		fmt.Println("User not found in database for the session.")
 		return models.RegisterRequest{}, false

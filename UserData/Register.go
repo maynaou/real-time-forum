@@ -28,6 +28,8 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(req)
+
 	validationErrors := utils.ValidateRegisterFornData(req)
 	if len(validationErrors) > 0 {
 		handler.ShowErrorPage(w, "Missing required fields", http.StatusBadRequest)
@@ -45,7 +47,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Password = string(hashedPass)
 	_, err = models.CreateUser(req)
-
+   
 	if err != nil {
 		handler.ShowErrorPage(w, "Database error", http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
@@ -55,18 +57,6 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	/*data, err := json.Marshal(req)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("Failed to marshal user data: %v", err)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if _, err := w.Write(data); err != nil {
-		fmt.Printf("Failed to write response data: %v", err)
-	}*/
 
 	response := JsonResponse{
 		Message: "register successful",

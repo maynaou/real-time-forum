@@ -187,10 +187,18 @@ class RegisterForm {
 
 class ForumPage {
     constructor() {
+        this.category = [
+            { name: "Tech", color: "rgb(25, 195, 125)" },
+            { name: "Finance", color: "rgb(255, 85, 85)" },
+            { name: "Health", color: "rgb(30, 144, 255)" },
+            { name: "Startup", color: "rgb(255, 215, 0)" },
+            { name: "Innovation", color: "rgb(148,0,211)" },
+        ];
         this.posts = [];
         this.selectedCategories = [];
         this.maxCategories = 3; 
         this.render();
+        this.fetchPosts();
     }
 
     render() {
@@ -200,45 +208,54 @@ class ForumPage {
                 <h1>Real-Time-Forum</h1>
                 <button id="logoutButton">Logout</button>
             </div>
-            <div class="post-form">
                 <form id="postForm">
                     <input type="text" name="title" placeholder="Title:" required>
                     <textarea name="content" placeholder="What is happening?!" required></textarea>
                     <div id="categoriesContainer"></div> <!-- Category selection here -->
                     <button id="submit" type="submit">Post</button>
                 </form>
-            </div>
-            <div class="filter-section">
-                <h2>Filter Posts</h2>
-                <button id="filterByCategory">Filter by Category</button>
-                <button id="filterByLikes">Filter by Liked Posts</button>
-            </div>
             <div id="postsContainer">
-                <h2>Posts</h2>
             </div>
         `;
+       
 
-        this.renderCategories(); // Call to render category checkboxes
+        this.renderCategories(); 
 
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
-        document.getElementById('filterByCategory').addEventListener('click', this.filterByCategory.bind(this));
-        document.getElementById('filterByLikes').addEventListener('click', this.filterByLikes.bind(this));
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
     }
 
-    renderCategories() {
-        const categories = [
-            { name: "Tech", color: "rgb(25, 195, 125)" },
-            { name: "Finance", color: "rgb(255, 85, 85)" },
-            { name: "Health", color: "rgb(30, 144, 255)" },
-            { name: "Startup", color: "rgb(255, 215, 0)" },
-            { name: "Innovation", color: "rgb(148,0,211)" },
-        ];
+    async fetchPosts() {
+        try {
+            const response = await fetch('/api/posts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to fetch posts');
+            }
+    
+            this.posts = result.map(post => ({
+                title: post.title,
+                content: post.content,
+                category: post.category, 
+            }));
+    
+            this.displayPosts(); 
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
 
+    renderCategories() {
         const categoriesContainer = document.getElementById('categoriesContainer');
         categoriesContainer.innerHTML = '';
 
-        categories.forEach((category) => {
+        this.category.forEach((category) => {
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = "category";
@@ -249,7 +266,7 @@ class ForumPage {
             label.append(document.createTextNode(category.name));
             label.style.backgroundColor = category.color;
             label.classList.add("category-label");
-
+            
             checkbox.addEventListener("change", () => {
                 this.handleCategoryChange(checkbox);
             });
@@ -288,76 +305,66 @@ class ForumPage {
         const data = {
             title: formData.get('title'),
             content: formData.get('content'),
-            categories: [...this.selectedCategories], // Use selected categories
-            likes: 0,
-            dislikes: 0,
+            category: [...this.selectedCategories], 
         };
 
-        // Simulate API call to save the post
-        this.posts.push(data);
-        this.displayPosts();
-        event.target.reset();
-        this.selectedCategories = []; // Reset categories after submission
-        this.renderCategories(); // Re-render categories to reset checkboxes
+       
+
+        try {
+            const response = await fetch('/api/post', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body : JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Logout failed');
+            }
+
+            console.log(data)
+
+            alert("post secced");
+            this.posts.push(data);
+            this.displayPosts();
+            event.target.reset();
+            this.selectedCategories = []; 
+            this.renderCategories();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+       
     }
 
     displayPosts() {
         const postsContainer = document.getElementById('postsContainer');
         postsContainer.innerHTML = '';
 
-        this.posts.forEach((post, index) => {
+        this.posts.forEach((post) => {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.innerHTML = `
+              <p> ${post.nickname}<p>
                 <h3>${post.title}</h3>
                 <p>${post.content}</p>
-                <p>Categories: ${post.categories.join(', ')}</p>
-                <p>Likes: ${post.likes} | Dislikes: ${post.dislikes}</p>
-                <button onclick="forumPage.likePost(${index})">Like</button>
-                <button onclick="forumPage.dislikePost(${index})">Dislike</button>
+                <p>${this.getCategoryElements(post.category)}</p>
             `;
             postsContainer.appendChild(postElement);
         });
     }
 
-    likePost(index) {
-        this.posts[index].likes += 1;
-        this.displayPosts();
-    }
-
-    dislikePost(index) {
-        this.posts[index].dislikes += 1;
-        this.displayPosts();
-    }
-
-    filterByCategory() {
-        const category = prompt("Enter category to filter:");
-        const filteredPosts = this.posts.filter(post => post.categories.includes(category));
-        this.displayFilteredPosts(filteredPosts);
-    }
-
-    filterByLikes() {
-        const likedPosts = this.posts.filter(post => post.likes > 0);
-        this.displayFilteredPosts(likedPosts);
-    }
-
-    displayFilteredPosts(filteredPosts) {
-        const postsContainer = document.getElementById('postsContainer');
-        postsContainer.innerHTML = '';
-
-        filteredPosts.forEach((post, index) => {
-            const postElement = document.createElement('div');
-            postElement.className = 'post';
-            postElement.innerHTML = `
-                <h3>${post.title}</h3>
-                <p>${post.content}</p>
-                <p>Categories: ${post.categories.join(', ')}</p>
-                <p>Likes: ${post.likes} | Dislikes: ${post.dislikes}</p>
-                <button onclick="forumPage.likePost(${index})">Like</button>
-                <button onclick="forumPage.dislikePost(${index})">Dislike</button>
+    getCategoryElements(categoriesArray) {
+        return categoriesArray.map(categoryName => {
+            const category = this.category.find(cat => cat.name === categoryName);
+            const color = category ? category.color : 'gray'; // Couleur par défaut
+            return `
+                <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
+                    ${categoryName}
+                </span>
             `;
-            postsContainer.appendChild(postElement);
-        });
+        }).join('');
     }
 
     async handleLogout() {

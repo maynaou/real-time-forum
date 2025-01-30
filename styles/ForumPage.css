@@ -175,8 +175,9 @@ input:focus {
     transition: background-color 0.3s;
     height: 36px;
     width: 60px;
-    margin-left: auto; 
-    margin-top: 10px;
+    position: absolute; /* Positionner de manière absolue */
+    bottom: 10px; /* Ajuster la distance du bas */
+    right: 10px; /* Ajuster la distance de droite */
 }
 
 #submit:hover {
@@ -184,21 +185,23 @@ input:focus {
     color: #4e34b6;
 }
 
-.post-form, .post {
+#postForm, .post {
+    position: relative;
     border: 1px solid #4e34b6;
     border-radius: 5px;
     padding: 8px 12px;
     margin: 1rem auto; /* Center the form */
     min-height: 200px;
+    padding-bottom: 50px;
 }
 
-.post-form h2, .filter-section h2 {
+#postForm h2, .filter-section h2 {
     font-size: 1.5rem;
     color: #333;
     margin-bottom: 15px;
 }
 
-.post-form input[type="text"] {
+#postForm input[type="text"] {
     width: 720px; /* Full width */
     height: 40px; /* Fixed height for the title input */
     padding: 12px; /* Padding inside the input */
@@ -208,7 +211,7 @@ input:focus {
     transition: border-color 0.3s; /* Smooth border color transition */
 }
 
-.post-form textarea {
+#postForm textarea {
     width: 720px;
     height: 100px; /* Fixed height for the textarea */
     padding: 12px; /* Padding inside the textarea */
@@ -218,8 +221,8 @@ input:focus {
     transition: border-color 0.3s; /* Smooth border color transition */
 }
 
-.post-form input[type="text"]:focus,
-.post-form textarea:focus {
+#postForm input[type="text"]:focus,
+#postForm textarea:focus {
     border-color: #4e34b6; /* Change border color on focus */
 }
 
@@ -227,39 +230,27 @@ input:focus {
     display: flex; 
     justify-content: center; 
     margin: 10px 0; 
+    padding-bottom: 20px;
 }
 
 .category-label {
-    display: inline-block; 
-    padding: 8px 12px; 
+    display: inline-flex; 
+    align-items: center;
+    padding: 4px 8px; 
     border-radius: 5px;
     margin: 5px; 
     color: white;
-    transition: opacity 0.3s; 
+    transition: background-color 0.3s, opacity 0.3s;
+    cursor: pointer; 
+}
+
+.category-label:hover {
+    opacity: 0.8;
 }
 
 .category-label.disabled {
     opacity: 0.5;
-}
-
-.filter-section {
-    margin: 20px 0;
-}
-
-.filter-section button {
-    background: #fff;
-    color: #4e34b6;
-    border: 1px solid #4e34b6;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    margin-right: 10px;
-}
-
-.filter-section button:hover {
-    background-color: #4e34b6;
-    color: #fff;
+    cursor: not-allowed;
 }
 
 
@@ -268,11 +259,17 @@ input:focus {
     font-weight: bold;
     margin-bottom: 10px;
     color: #ffffff;
+    text-align: left;
+    padding: 0 10px;
 }
 
 .post p {
     color: #ffffff;
-    margin-right: 500px;
+    word-wrap: break-word; 
+    max-width: 100%;
+    line-height: 1.6; 
+    text-align: left; 
+    padding: 0 10px;
 }
 
 

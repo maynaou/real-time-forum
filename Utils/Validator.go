@@ -77,3 +77,25 @@ func ValidateLoginFormInput(NicknameOREmail, password string) map[string]string 
 
 	return errors
 }
+
+func ValidationPostInput(post models.Post) map[string]string {
+	errors := make(map[string]string)
+
+	if post.Title == "" {
+		errors["title"] = "title cannot be empty"
+	} else if len(post.Title) > 50 {
+		errors["title"] = "title cannot exceed 50 characters"
+	}
+
+	if post.Content == "" {
+		errors["content"] = "content cannot be empty"
+	} else if len(post.Content) > 1000 {
+		errors["content"] = "content cannot exceed 1000 characters"
+	}
+
+	if len(post.Categories) == 0 {
+		errors["categories"] = "at least one category has to be selected"
+	}
+
+	return errors
+}

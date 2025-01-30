@@ -9,14 +9,16 @@ import (
 )
 
 type RegisterRequest struct {
-	ID        string `json:"id"`
-	Nickname  string `json:"nickname"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Age       string `json:"age"`
-	Gender    string `json:"gender"`
+	ID        string    `json:"id"`
+	Nickname  string    `json:"nickname"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Age       string    `json:"age"`
+	Gender    string    `json:"gender"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"last_seen"`
 }
 
 func CreateUser(user RegisterRequest) (string, error) {
@@ -32,8 +34,8 @@ func CreateUser(user RegisterRequest) (string, error) {
 	defer cancel()
 	// Requête SQL pour insérer un utilisateur
 	query := `
-        INSERT INTO users (id, nickname, first_name, last_name, email, age, gender, password)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        INSERT INTO users (id, nickname, first_name, last_name, email, age, gender, password,created_at, last_seen)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?)`
 
 	// Préparer la déclaration SQL
 	stmt, err := db.DB.PrepareContext(ctx, query)
@@ -44,7 +46,7 @@ func CreateUser(user RegisterRequest) (string, error) {
 	defer stmt.Close()
 
 	// Exécuter la déclaration avec les données de l'utilisateur
-	_, err = stmt.ExecContext(ctx, user.ID, user.Nickname, user.FirstName, user.LastName, user.Email, user.Age, user.Gender, user.Password)
+	_, err = stmt.ExecContext(ctx, user.ID, user.Nickname, user.FirstName, user.LastName, user.Email, user.Age, user.Gender, user.Password, time.Now().UTC(), time.Now().UTC())
 	if err != nil {
 		fmt.Println("Failed to create user: %v", err)
 		return "", fmt.Errorf("failed to create user: %v", err)
