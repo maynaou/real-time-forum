@@ -12,6 +12,7 @@ import (
 type Post struct {
 	ID         string    `json:"id"`
 	UserID     string    `json:"user_id"`
+	Username   string    `json:"username"`
 	Title      string    `json:"title"`
 	Content    string    `json:"content"`
 	Categories []string  `json:"category"`
@@ -28,7 +29,9 @@ func CreatePost(post Post, user RegisterRequest) (string, error) {
 	context, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO posts (id,user_id,title,content,category,created_at) VALUES (?, ?, ?, ?, ?, ?)"
+	// Che
+
+	query := "INSERT INTO posts (id,user_id,username,title,content,category,created_at) VALUES (?,?, ?, ?, ?, ?, ?)"
 	statement, err := db.DB.PrepareContext(context, query)
 	if err != nil {
 		fmt.Printf("Failed to prepare create post statement for user ID: %s, Title: %s, Error: %v", user.ID, post.Title, err)
@@ -36,13 +39,11 @@ func CreatePost(post Post, user RegisterRequest) (string, error) {
 	}
 
 	categoriesStr := strings.Join(post.Categories, ",")
-	_, err = statement.ExecContext(context, &post.ID, &user.ID, &post.Title, &post.Content, categoriesStr, time.Now().UTC())
+	_, err = statement.ExecContext(context, &post.ID, &user.ID, &user.Nickname, &post.Title, &post.Content, categoriesStr, time.Now().UTC())
 	if err != nil {
 		fmt.Printf("Failed to create post for user ID: %s, Title: %s. Error: %v", user.ID, post.Title, err)
 		return post.ID, fmt.Errorf("failed to create post: %v", err)
 	}
-	
-
 
 	return post.ID, nil
 
@@ -63,6 +64,7 @@ func GetAllPosts() ([]Post, error) {
 	SELECT
 		posts.id,
 		posts.user_id,
+		posts.username,
 		posts.title,
 		posts.content,
 		posts.category,
@@ -87,7 +89,7 @@ func GetAllPosts() ([]Post, error) {
 		var post Post
 		var categoriesStr string
 
-		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &categoriesStr, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.Title, &post.Content, &categoriesStr, &post.CreatedAt)
 		if err != nil {
 			fmt.Printf("Failed to scan row during post retrieval. Error: %v", err)
 			return nil, fmt.Errorf("failed to scan row: %v", err)

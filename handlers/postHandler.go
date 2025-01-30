@@ -41,6 +41,8 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := utils.GetUserFromSession(r)
 
+	post.Username = user.Nickname
+
 	if !ok {
 		fmt.Println("user not found in session")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -59,9 +61,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = models.CreatePost(post, user)
-
-    
-	fmt.Println(post)
+	fmt.Println("HHHHHH", post)
 
 	if err != nil {
 		fmt.Printf("failed to marshal post data: %v", err)

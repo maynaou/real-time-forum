@@ -147,6 +147,12 @@ input:focus {
     color: #fff;
 }
 
+#logged-in-label {
+  margin-right: 1.5rem; 
+  font-weight: bolder;
+  color: white;
+}
+
 #logoutButton {
     background-color: #000000; 
     color: white;
@@ -254,7 +260,7 @@ input:focus {
 }
 
 
-.post h3 {
+.post h3,h4 {
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 10px;

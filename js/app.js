@@ -96,13 +96,14 @@ class LoginForm {
             });
 
             const result =await response.json()
-            console.log(result.message)
+            console.log(result)
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
-
+            
 
             alert('Login successful!');
+            sessionStorage.setItem('username', result.username); 
             new ForumPage();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -206,7 +207,9 @@ class ForumPage {
         forumContainer.innerHTML = `
             <div class="user">
                 <h1>Real-Time-Forum</h1>
-                <button id="logoutButton">Logout</button>
+                <span id="logged-in-label">${this.getUsername()}<span>
+                <button id="logoutButton">❌</button>
+
             </div>
                 <form id="postForm">
                     <input type="text" name="title" placeholder="Title:" required>
@@ -225,6 +228,11 @@ class ForumPage {
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
     }
 
+    getUsername() {
+        // Retrieve the logged-in username from session or context
+        return sessionStorage.getItem('username') || "Guest" // Example placeholder
+    }
+
     async fetchPosts() {
         try {
             const response = await fetch('/api/posts', {
@@ -240,6 +248,7 @@ class ForumPage {
             }
     
             this.posts = result.map(post => ({
+                username:post.username,
                 title: post.title,
                 content: post.content,
                 category: post.category, 
@@ -303,6 +312,7 @@ class ForumPage {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = {
+            username: 'John Doe',
             title: formData.get('title'),
             content: formData.get('content'),
             category: [...this.selectedCategories], 
@@ -324,7 +334,7 @@ class ForumPage {
                 throw new Error(result.message || 'Logout failed');
             }
 
-            console.log(data)
+            data.username = result.username
 
             alert("post secced");
             this.posts.push(data);
@@ -346,7 +356,7 @@ class ForumPage {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.innerHTML = `
-              <p> ${post.nickname}<p>
+                <h4>${post.username}<h4>
                 <h3>${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>

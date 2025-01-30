@@ -10,7 +10,8 @@ import (
 )
 
 type LoginResponse struct {
-	Message string `json:"message"`
+	Message  string `json:"message"`
+	Username string `json:"username"`
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -50,9 +51,10 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Error setting session: %v", err)
 			return
 		}
-
+		
 		response := LoginResponse{
-			Message: "Login successful",
+			Message:  "Login successful",
+			Username: user.Nickname,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
