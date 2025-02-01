@@ -96,7 +96,6 @@ class LoginForm {
             });
 
             const result =await response.json()
-            console.log(result)
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
@@ -252,6 +251,9 @@ class ForumPage {
                 title: post.title,
                 content: post.content,
                 category: post.category, 
+                created_at: post.created_at,
+                likes: post.likes || 0,
+                dislikes: post.dislikes || 0,
             }));
     
             this.displayPosts(); 
@@ -312,10 +314,11 @@ class ForumPage {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = {
-            username: 'John Doe',
+            username: this.getUsername(),
             title: formData.get('title'),
             content: formData.get('content'),
             category: [...this.selectedCategories], 
+            created_at: new Date().toISOString(),
         };
 
        
@@ -334,10 +337,10 @@ class ForumPage {
                 throw new Error(result.message || 'Logout failed');
             }
 
-            data.username = result.username
 
             alert("post secced");
-            this.posts.push(data);
+            this.posts.unshift(data); // Add the new post to the beginning
+            console.log("Posts after adding new post:", this.posts); 
             this.displayPosts();
             event.target.reset();
             this.selectedCategories = []; 
@@ -351,30 +354,92 @@ class ForumPage {
     displayPosts() {
         const postsContainer = document.getElementById('postsContainer');
         postsContainer.innerHTML = '';
-
+    
         this.posts.forEach((post) => {
             const postElement = document.createElement('div');
             postElement.className = 'post';
+            const formattedDate = formatDate(new Date(post.created_at));
+            const TimeAgo = timeAgo(new Date(post.created_at));
+            
+            const likeCount = post.likes || 0;
+            const dislikeCount = post.dislikes || 0;
+    
             postElement.innerHTML = `
-                <h4>${post.username}<h4>
-                <h3>${post.title}</h3>
+                <h4 style="font-weight: bold; color: #007bff;">${post.username}<h4>
+                <p style="font-size: 12px; color: gray;">${TimeAgo}</p>
+                <h3 style="font-size: 25px">${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>
+                <p style="font-size: 12px; color: gray;">${formattedDate}</p>
+    
+                <!-- Boutons J'aime et Je n'aime pas -->
+                <div class="reaction-buttons">
+                    <button class="like-button" data-post-id="${post.created_at}" onclick="likePost('${post.created_at}')">👍 ${likeCount}</button>
+                    <button class="dislike-button" data-post-id="${post.created_at}" onclick="dislikePost('${post.created_at}')">👎 ${dislikeCount}</button>
+                    <button class="comment-button" data-post-id="${post.created_at}">💬 Commenter</button>
+                </div>
             `;
             postsContainer.appendChild(postElement);
         });
     }
+    
 
     getCategoryElements(categoriesArray) {
         return categoriesArray.map(categoryName => {
             const category = this.category.find(cat => cat.name === categoryName);
-            const color = category ? category.color : 'gray'; // Couleur par défaut
+            const color = category ? category.color : 'gray'; 
             return `
                 <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
                     ${categoryName}
                 </span>
             `;
         }).join('');
+    }
+
+
+
+    async likePost(postId) {
+        try {
+            const response = await fetch('/api/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ post_id: postId }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to like the post');
+            }
+
+            const post = this.posts.find(p => p.created_at === postId);
+            post.likes++;
+            this.displayPosts();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async dislikePost(postId) {
+        try {
+            const response = await fetch('/api/dislike', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ post_id: postId }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to dislike the post');
+            }
+
+            const post = this.posts.find(p => p.created_at === postId);
+            post.dislikes++;
+            this.displayPosts();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
     }
 
     async handleLogout() {
@@ -400,3 +465,33 @@ class ForumPage {
         }
     }
 }
+
+function formatDate(date) {
+    const options = {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    };
+    return date.toLocaleString('en-US', options);
+}
+
+function timeAgo(date) {
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const days = Math.floor(seconds / 86400);
+    const months = Math.floor(seconds / 2592000); 
+    const years = Math.floor(seconds / 31536000);
+
+    if (seconds < 60) return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    if (days < 30) return `${days} day${days !== 1 ? 's' : ''} ago`;
+    if (months < 12) return `${months} month${months !== 1 ? 's' : ''} ago`;
+    return `${years} year${years !== 1 ? 's' : ''} ago`;
+}
+

@@ -278,6 +278,33 @@ input:focus {
     padding: 0 10px;
 }
 
+.reaction-buttons {
+    display: flex;
+    justify-content: space-between; /* Espacement entre les boutons */
+    margin-top: 10px; /* Espace au-dessus des boutons */
+}
+
+.reaction-buttons button {
+    background-color: #ffffff; /* Couleur de fond blanche */
+    border: 2px solid #007bff; /* Bordure bleue */
+    border-radius: 5px; /* Coins arrondis */
+    color: #007bff; /* Couleur du texte bleue */
+    cursor: pointer; /* Curseur en main au survol */
+    font-size: 16px; /* Taille de police */
+    padding: 10px 15px; /* Espacement à l'intérieur des boutons */
+    margin-right: 10px; /* Espacement entre les boutons */
+    transition: background-color 0.3s, color 0.3s; /* Transition pour l'effet au survol */
+}
+
+.reaction-buttons button:hover {
+    background-color: #007bff; /* Couleur de fond bleue au survol */
+    color: #ffffff; /* Couleur du texte blanche au survol */
+}
+
+.reaction-buttons button:last-child {
+    margin-right: 0; /* Supprime l'espacement à droite pour le dernier bouton */
+}
+
 
 @media (max-width: 736px) {
     .main {

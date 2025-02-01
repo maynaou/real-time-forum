@@ -17,7 +17,7 @@ func main() {
 	if err := database.InitDB(); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	
+
 	db := database.GetDatabaseInstance()
 	if db.DB != nil {
 		log.Println("Connexion à la base de données réussie.")
@@ -31,6 +31,8 @@ func main() {
 	http.HandleFunc("/api/logout", userdata.HandleLogout)
 	http.HandleFunc("/api/posts", handler.Posts)
 	http.HandleFunc("/api/post", handler.Post)
+	http.HandleFunc("/api/likes", handler.Likes)
+	http.HandleFunc("/api/like", handler.Like)
 	fmt.Println("Server started on http://localhost:" + port)
 	http.ListenAndServe(":"+port, nil)
 }

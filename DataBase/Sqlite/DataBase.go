@@ -29,13 +29,11 @@ func InitDB() error {
 		`CREATE TABLE IF NOT EXISTS posts (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
-            username TEXT NOT NULL,
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             category TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-             UNIQUE (user_id, title)
+            FOREIGN KEY (user_id) REFERENCES users(id)
         );`,
 
 		`CREATE TABLE IF NOT EXISTS comments (
@@ -57,6 +55,20 @@ func InitDB() error {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (sender_id) REFERENCES users(id),
             FOREIGN KEY (receiver_id) REFERENCES users(id)
+        );`,
+
+        `CREATE TABLE IF NOT EXISTS liked_posts (
+            post_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            FOREIGN KEY(post_id) REFERENCES posts(id),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );`,
+    
+       `CREATE TABLE IF NOT EXISTS disliked_posts (
+            post_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            FOREIGN KEY(post_id) REFERENCES posts(id),
+            FOREIGN KEY(user_id) REFERENCES users(id)
         );`,
 	}
 

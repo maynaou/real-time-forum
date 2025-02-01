@@ -31,7 +31,6 @@ func GetUserDetails(req LoginRequest) (storedreq LoginRequest, err error) {
 		fmt.Println("Both username and email are empty")
 		return storedreq, fmt.Errorf("both username and email are empty")
 	}
-
 	query := "SELECT id, nickname, email, password FROM users WHERE nickname = ? OR email = ?"
 	row := db.DB.QueryRow(query, identifier, identifier)
 

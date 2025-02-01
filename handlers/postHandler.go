@@ -39,9 +39,9 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := utils.GetUserFromSession(r)
+	fmt.Println(post)
 
-	post.Username = user.Nickname
+	user, ok := utils.GetUserFromSession(r)
 
 	if !ok {
 		fmt.Println("user not found in session")
