@@ -195,6 +195,8 @@ class ForumPage {
         this.posts = [];
         this.selectedCategories = [];
         this.maxCategories = 3; 
+        this.likePost = this.likePost.bind(this);
+        this.dislikePost = this.dislikePost.bind(this);
         this.render();
         this.fetchPosts();
     }
@@ -252,6 +254,9 @@ class ForumPage {
                 created_at: post.created_at,
                 likes: post.likes || 0,
                 dislikes: post.dislikes || 0,
+                id: post.id,
+                isLiked: false,
+                isDisliked: false ,
             }));
     
             this.displayPosts(); 
@@ -335,9 +340,24 @@ class ForumPage {
                 throw new Error(result.message || 'Logout failed');
             }
 
+            if (!result.id) {
+                throw new Error('Post ID is undefined');
+            }
 
             alert("post secced");
-            this.posts.unshift(data); // Add the new post to the beginning
+            this.posts.unshift({
+                id: result.id,
+                username: result.username,
+                title: result.title,
+                content: result.content,
+                category: result.category,
+                created_at: result.created_at,
+                likes: result.likes,
+                dislikes: result.dislikes,
+                isLiked: false,
+                isDisliked: false,
+            });
+     // Add the new post to the beginning
             console.log("Posts after adding new post:", this.posts); 
             this.displayPosts();
             event.target.reset();
@@ -352,42 +372,47 @@ class ForumPage {
     displayPosts() {
         const postsContainer = document.getElementById('postsContainer');
         postsContainer.innerHTML = '';
-    
+       
         this.posts.forEach((post) => {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             const formattedDate = formatDate(new Date(post.created_at));
-            const timeAgo = timeAgo(new Date(post.created_at));
-    
+            const TimeAgo = timeAgo(new Date(post.created_at));
             const likeCount = post.likes || 0;
+
             const dislikeCount = post.dislikes || 0;
     
             postElement.innerHTML = `
                 <h4 style="font-weight: bold; color: #007bff;">${post.username}</h4>
-                <p style="font-size: 12px; color: gray;">${timeAgo}</p>
+                <p style="font-size: 12px; color: gray;">${TimeAgo}</p>
                 <h3 style="font-size: 25px">${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>
                 <p style="font-size: 12px; color: gray;">${formattedDate}</p>
     
                 <div class="reaction-buttons">
-                    <button class="like-button" onclick="likePost('${formattedDate}')">👍 ${likeCount}</button>
-                    <button class="dislike-button" onclick="dislikePost('${formattedDate}')">👎 ${dislikeCount}</button>
+                    <button class="like-button" style="${post.isLiked ? 'color: green;' : ''}">👍 ${likeCount}</button>
+                    <button class="dislike-button"  style="${post.isDisliked ? 'color: red;' : ''}">👎 ${dislikeCount}</button>
                     <button class="comment-button">💬 Comment</button>
                 </div>
             `;
+
+            postElement.querySelector('.like-button').addEventListener('click', () => {
+                this.likePost(post.id); 
+            });
+
+            postElement.querySelector('.dislike-button').addEventListener('click', () => {
+                this.dislikePost(post.id); 
+            });
              
             postsContainer.appendChild(postElement);
         });
     }
     
 
-
-
-
-
-    async likePost(postId) {
-        console.log("hhhhhhhhh")
+  async likePost(postId) {
+    console.log("GGGGGG",postId);
+    
         try {
             const response = await fetch('/api/like', {
                 method: 'POST',
@@ -401,11 +426,20 @@ class ForumPage {
                 throw new Error('Failed to like the post');
             }
 
-
-
-            const post = this.posts.find(p => p.created_at === postId);
-            console.log(p.created_at)
-            post.likes++;
+            const post = this.posts.find(p => p.id === postId);
+            if (post) {
+               
+                if (post.isLiked) {
+                    post.likes--; 
+                } else {
+                    post.likes++; 
+                    if (post.isDisliked) {
+                        post.dislikes--; 
+                        post.isDisliked = false; 
+                    }
+                }
+                post.isLiked = !post.isLiked; 
+            }
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -413,6 +447,8 @@ class ForumPage {
     }
 
     async dislikePost(postId) {
+        console.log("HHHHHH");
+        
         try {
             const response = await fetch('/api/dislike', {
                 method: 'POST',
@@ -427,7 +463,19 @@ class ForumPage {
             }
 
             const post = this.posts.find(p => p.id === postId);
-            post.dislikes++;
+            if (post) {
+                // Toggle dislike state
+                if (post.isDisliked) {
+                    post.dislikes--; // Decrement dislikes if already disliked
+                } else {
+                    post.dislikes++; // Increment dislikes if not disliked
+                    if (post.isLiked) {
+                        post.likes--; // Decrement likes if it was liked
+                        post.isLiked = false; // Reset like state
+                    }
+                }
+                post.isDisliked = !post.isDisliked; // Toggle dislike state
+            }
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);

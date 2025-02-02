@@ -17,6 +17,8 @@ type Post struct {
 	Content    string    `json:"content"`
 	Categories []string  `json:"category"`
 	CreatedAt  time.Time `json:"created_at"`
+	Likes      int       `json:"likes"`
+	Dislikes   int       `json:"dislikes"`
 }
 
 func CreatePost(post Post, user RegisterRequest) (string, error) {
@@ -68,7 +70,9 @@ func GetAllPosts() ([]Post, error) {
 		posts.title,
 		posts.content,
 		posts.category,
-		posts.created_at
+		posts.created_at,
+		(SELECT COUNT(*) FROM liked_posts WHERE post_id = posts.id) AS likes,
+		(SELECT COUNT(*) FROM disliked_posts WHERE post_id = posts.id) AS dislikes
 	FROM
 		posts
 	INNER JOIN
@@ -91,7 +95,7 @@ func GetAllPosts() ([]Post, error) {
 		var post Post
 		var categoriesStr string
 
-		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.Title, &post.Content, &categoriesStr, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.Title, &post.Content, &categoriesStr, &post.CreatedAt, &post.Likes, &post.Dislikes)
 		if err != nil {
 			fmt.Printf("Failed to scan row during post retrieval. Error: %v", err)
 			return nil, fmt.Errorf("failed to scan row: %v", err)

@@ -57,14 +57,16 @@ func InitDB() error {
             FOREIGN KEY (receiver_id) REFERENCES users(id)
         );`,
 
-        `CREATE TABLE IF NOT EXISTS liked_posts (
+		`CREATE TABLE IF NOT EXISTS liked_posts (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
             post_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
             FOREIGN KEY(post_id) REFERENCES posts(id),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );`,
-    
-       `CREATE TABLE IF NOT EXISTS disliked_posts (
+
+		`CREATE TABLE IF NOT EXISTS disliked_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
             post_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
             FOREIGN KEY(post_id) REFERENCES posts(id),

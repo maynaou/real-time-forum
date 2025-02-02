@@ -10,7 +10,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8083"
+var port = "8085"
 
 func main() {
 
@@ -31,8 +31,8 @@ func main() {
 	http.HandleFunc("/api/logout", userdata.HandleLogout)
 	http.HandleFunc("/api/posts", handler.Posts)
 	http.HandleFunc("/api/post", handler.Post)
-	http.HandleFunc("/api/likes", handler.Likes)
 	http.HandleFunc("/api/like", handler.Like)
+	http.HandleFunc("/api/dislike", handler.Dislike)
 	fmt.Println("Server started on http://localhost:" + port)
 	http.ListenAndServe(":"+port, nil)
 }

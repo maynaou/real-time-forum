@@ -8,19 +8,19 @@ import (
 	"net/http"
 )
 
-func Like(w http.ResponseWriter, r *http.Request) {
+func Dislike(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		createLike(w, r)
+		createDislike(w, r)
 	} else {
 		ShowErrorPage(w, "methode not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 }
 
-func createLike(w http.ResponseWriter, r *http.Request) {
-	var like models.Liked_Post
+func createDislike(w http.ResponseWriter, r *http.Request) {
+	var dislike models.Liked_Post
 
-	err := json.NewDecoder(r.Body).Decode(&like)
+	err := json.NewDecoder(r.Body).Decode(&dislike)
 	if err != nil {
 		fmt.Printf("Failed to decode request body: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -34,16 +34,16 @@ func createLike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = models.CreateLike(like, user)
+	err = models.CreateDislike(dislike, user)
 	if err != nil {
-		fmt.Printf("Failed to create like: %v\n", err)
+		fmt.Printf("Failed to create dislike: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	data, err := json.Marshal(like)
+	data, err := json.Marshal(dislike)
 	if err != nil {
-		fmt.Printf("Failed to marshal like data: %v\n", err)
+		fmt.Printf("Failed to marshal dislike data: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

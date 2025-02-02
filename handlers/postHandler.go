@@ -39,8 +39,6 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(post)
-
 	user, ok := utils.GetUserFromSession(r)
 
 	if !ok {
@@ -60,8 +58,9 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = models.CreatePost(post, user)
-	fmt.Println("HHHHHH", post)
+	post.ID, err = models.CreatePost(post, user)
+
+	fmt.Println(post)
 
 	if err != nil {
 		fmt.Printf("failed to marshal post data: %v", err)
@@ -69,23 +68,31 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(post)
+	// Retourner le post créé avec son ID
+	response := map[string]interface{}{
+		"id":         post.ID,
+		"username":   user.Nickname, // Assurez-vous de renvoyer le bon username
+		"title":      post.Title,
+		"content":    post.Content,
+		"category":   post.Categories,
+		"created_at": post.CreatedAt,
+		"likes":      0, // Initialiser à 0
+		"dislikes":   0, // Initialiser à 0
+	}
 
+	data, err := json.Marshal(response)
 	if err != nil {
-		fmt.Printf("Failed to marshal post data: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(data); err != nil {
-		fmt.Printf("Failed to write response data: %v", err)
-	}
+	w.WriteHeader(http.StatusCreated)
+	w.Write(data) // Envoyer le post créé en réponse
 
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("hhhhhhhh")
 	posts, err := models.GetAllPosts()
 
 	if err != nil {
