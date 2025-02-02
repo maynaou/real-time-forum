@@ -183,8 +183,6 @@ class RegisterForm {
     }
 }
 
-
-
 class ForumPage {
     constructor() {
         this.category = [
@@ -359,46 +357,37 @@ class ForumPage {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             const formattedDate = formatDate(new Date(post.created_at));
-            const TimeAgo = timeAgo(new Date(post.created_at));
-            
+            const timeAgo = timeAgo(new Date(post.created_at));
+    
             const likeCount = post.likes || 0;
             const dislikeCount = post.dislikes || 0;
     
             postElement.innerHTML = `
-                <h4 style="font-weight: bold; color: #007bff;">${post.username}<h4>
-                <p style="font-size: 12px; color: gray;">${TimeAgo}</p>
+                <h4 style="font-weight: bold; color: #007bff;">${post.username}</h4>
+                <p style="font-size: 12px; color: gray;">${timeAgo}</p>
                 <h3 style="font-size: 25px">${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>
                 <p style="font-size: 12px; color: gray;">${formattedDate}</p>
     
-                <!-- Boutons J'aime et Je n'aime pas -->
                 <div class="reaction-buttons">
-                    <button class="like-button" data-post-id="${post.created_at}" onclick="likePost('${post.created_at}')">👍 ${likeCount}</button>
-                    <button class="dislike-button" data-post-id="${post.created_at}" onclick="dislikePost('${post.created_at}')">👎 ${dislikeCount}</button>
-                    <button class="comment-button" data-post-id="${post.created_at}">💬 Commenter</button>
+                    <button class="like-button" onclick="likePost('${formattedDate}')">👍 ${likeCount}</button>
+                    <button class="dislike-button" onclick="dislikePost('${formattedDate}')">👎 ${dislikeCount}</button>
+                    <button class="comment-button">💬 Comment</button>
                 </div>
             `;
+             
             postsContainer.appendChild(postElement);
         });
     }
     
 
-    getCategoryElements(categoriesArray) {
-        return categoriesArray.map(categoryName => {
-            const category = this.category.find(cat => cat.name === categoryName);
-            const color = category ? category.color : 'gray'; 
-            return `
-                <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
-                    ${categoryName}
-                </span>
-            `;
-        }).join('');
-    }
+
 
 
 
     async likePost(postId) {
+        console.log("hhhhhhhhh")
         try {
             const response = await fetch('/api/like', {
                 method: 'POST',
@@ -412,7 +401,10 @@ class ForumPage {
                 throw new Error('Failed to like the post');
             }
 
+
+
             const post = this.posts.find(p => p.created_at === postId);
+            console.log(p.created_at)
             post.likes++;
             this.displayPosts();
         } catch (error) {
@@ -434,12 +426,24 @@ class ForumPage {
                 throw new Error('Failed to dislike the post');
             }
 
-            const post = this.posts.find(p => p.created_at === postId);
+            const post = this.posts.find(p => p.id === postId);
             post.dislikes++;
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
         }
+    }
+
+    getCategoryElements(categoriesArray) {
+        return categoriesArray.map(categoryName => {
+            const category = this.category.find(cat => cat.name === categoryName);
+            const color = category ? category.color : 'gray'; 
+            return `
+                <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
+                    ${categoryName}
+                </span>
+            `;
+        }).join('');
     }
 
     async handleLogout() {

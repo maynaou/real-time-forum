@@ -201,12 +201,6 @@ input:focus {
     padding-bottom: 50px;
 }
 
-#postForm h2, .filter-section h2 {
-    font-size: 1.5rem;
-    color: #333;
-    margin-bottom: 15px;
-}
-
 #postForm input[type="text"] {
     width: 720px; /* Full width */
     height: 40px; /* Fixed height for the title input */
