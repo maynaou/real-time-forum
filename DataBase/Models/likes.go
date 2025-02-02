@@ -70,3 +70,13 @@ func CreateLike(like Liked_Post, user RegisterRequest) error {
 	return nil
 }
 
+func CountLikes(postID string) (int, error) {
+	var count int
+	db := database.GetDatabaseInstance()
+	if db == nil || db.DB == nil {
+		log.Println("Database connection error")
+		return 0, fmt.Errorf("database connection error")
+	}
+	err := db.DB.QueryRow("SELECT COUNT(*) FROM liked_posts WHERE post_id = ?", postID).Scan(&count)
+	return count, err
+}

@@ -41,16 +41,22 @@ func createDislike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(dislike)
+	likeCount, _ := models.CountLikes(dislike.Post_ID)
+	dislikeCount, _ := models.CountDislikes(dislike.Post_ID)
+
+	fmt.Println("like", likeCount, "dislike", dislikeCount)
+
+	response := map[string]int{
+		"likes":    likeCount,
+		"dislikes": dislikeCount,
+	}
+
+	data, err := json.Marshal(response)
 	if err != nil {
-		fmt.Printf("Failed to marshal dislike data: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if _, err := w.Write(data); err != nil {
-		fmt.Printf("Failed to write response data: %v\n", err)
-	}
+	w.Write(data)
 }

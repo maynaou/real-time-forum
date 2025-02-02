@@ -256,8 +256,10 @@ class ForumPage {
                 dislikes: post.dislikes || 0,
                 id: post.id,
                 isLiked: false,
-                isDisliked: false ,
+                isDisliked: false,
             }));
+
+            console.log("Posts after adding new post:", this.posts); 
     
             this.displayPosts(); 
         } catch (error) {
@@ -411,7 +413,6 @@ class ForumPage {
     
 
   async likePost(postId) {
-    console.log("GGGGGG",postId);
     
         try {
             const response = await fetch('/api/like', {
@@ -426,20 +427,20 @@ class ForumPage {
                 throw new Error('Failed to like the post');
             }
 
-            const post = this.posts.find(p => p.id === postId);
-            if (post) {
-               
-                if (post.isLiked) {
-                    post.likes--; 
-                } else {
-                    post.likes++; 
-                    if (post.isDisliked) {
-                        post.dislikes--; 
-                        post.isDisliked = false; 
-                    }
-                }
-                post.isLiked = !post.isLiked; 
+        // Récupérer le post mis à jour
+        const result = await response.json();
+        const post = this.posts.find(p => p.id === postId);
+
+        if (post) {
+            post.likes = result.likes; // Mettre à jour le nombre de likes
+            post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+            post.isLiked = !post.isLiked; // Inverser l'état de like
+
+            // Si l'utilisateur a aimé, réinitialiser l'état de dislike
+            if (post.isLiked) {
+                post.isDisliked = false; 
             }
+        }
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -447,7 +448,6 @@ class ForumPage {
     }
 
     async dislikePost(postId) {
-        console.log("HHHHHH");
         
         try {
             const response = await fetch('/api/dislike', {
@@ -462,20 +462,21 @@ class ForumPage {
                 throw new Error('Failed to dislike the post');
             }
 
-            const post = this.posts.find(p => p.id === postId);
-            if (post) {
-                // Toggle dislike state
-                if (post.isDisliked) {
-                    post.dislikes--; // Decrement dislikes if already disliked
-                } else {
-                    post.dislikes++; // Increment dislikes if not disliked
-                    if (post.isLiked) {
-                        post.likes--; // Decrement likes if it was liked
-                        post.isLiked = false; // Reset like state
-                    }
-                }
-                post.isDisliked = !post.isDisliked; // Toggle dislike state
+        // Récupérer le post mis à jour
+        const result = await response.json();
+        const post = this.posts.find(p => p.id === postId);
+
+        if (post) {
+            post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+            post.likes = result.likes; // Mettre à jour le nombre de likes
+            post.isDisliked = !post.isDisliked; // Inverser l'état de dislike
+
+            // Si l'utilisateur a disliké, réinitialiser l'état de like
+            if (post.isDisliked) {
+                post.isLiked = false; 
             }
+        }
+
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -511,6 +512,7 @@ class ForumPage {
             alert("You have been logged out.");
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
+
             new ShowHomePage();
         } catch (error) {
             alert('Error: ' + error.message);
