@@ -186,11 +186,11 @@ class RegisterForm {
 class ForumPage {
     constructor() {
         this.category = [
-            { name: "Tech", color: "rgb(25, 195, 125)" },
-            { name: "Finance", color: "rgb(255, 85, 85)" },
-            { name: "Health", color: "rgb(30, 144, 255)" },
-            { name: "Startup", color: "rgb(255, 215, 0)" },
-            { name: "Innovation", color: "rgb(148,0,211)" },
+            { name: "Tech", color: "rgb(34, 193, 195)" }, // Teal
+            { name: "Finance", color: "rgb(255, 99, 71)" }, // Tomato
+            { name: "Health", color: "rgb(70, 130, 180)" }, // Steel Blue
+            { name: "Startup", color: "rgb(255, 223, 186)" }, // Light Goldenrod Yellow
+            { name: "Innovation", color: "rgb(186, 85, 211)" }, // Medium Orchid
         ];
         this.posts = [];
         this.selectedCategories = [];
@@ -204,12 +204,23 @@ class ForumPage {
     render() {
         const forumContainer = document.getElementById('formContainer');
         forumContainer.innerHTML = `
+
             <div class="user">
                 <h1>Real-Time-Forum</h1>
                 <span id="logged-in-label">${this.getUsername()}<span>
                 <button id="logoutButton">❌</button>
 
             </div>
+            
+<div class="filter-container">
+    <div class="category-container">
+        <label class="category-filter-label" for="categoryFilter">Filter by Category:</label>
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+            ${this.category.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
+        </select>
+    </div>
+</div>
                 <form id="postForm">
                     <input type="text" name="title" placeholder="Title:" required>
                     <textarea name="content" placeholder="What is happening?!" required></textarea>
@@ -222,7 +233,7 @@ class ForumPage {
        
 
         this.renderCategories(); 
-
+        document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
     }
@@ -371,11 +382,21 @@ class ForumPage {
        
     }
 
-    displayPosts() {
+    filterPosts() {
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const filteredPosts = this.posts.filter(post => {
+            const matchesCategory = categoryFilter ? post.category.includes(categoryFilter) : true;
+            return matchesCategory;
+        });
+    
+        this.displayPosts(filteredPosts);
+    }
+
+    displayPosts(postsToDisplay = this.posts) {
         const postsContainer = document.getElementById('postsContainer');
         postsContainer.innerHTML = '';
        
-        this.posts.forEach((post) => {
+           postsToDisplay.forEach((post) => {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             const formattedDate = formatDate(new Date(post.created_at));

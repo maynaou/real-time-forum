@@ -133,7 +133,7 @@ input:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #4e34b6;
+    border: 1px solid #4e34b6;
     width: 100%;
     position: fixed; /* Fixed at the top */
     top: 0; 
@@ -144,41 +144,42 @@ input:focus {
 }
 
 .user h1 {
-    color: #fff;
+    color: #ffffff;
 }
 
 #logged-in-label {
+    font-size: x-large;
   margin-right: 1.5rem; 
   font-weight: bolder;
-  color: white;
+  color:  #ffffff;
 }
 
 #logoutButton {
-    background-color: #000000; 
-    color: white;
-    border: none;
+    border: 1px solid #4e34b6; /* Bordure bleue */
+    background-color: transparent; /* Fond transparent */
+    color: #ffffff; /* Couleur du texte */
     padding: 8px 12px; 
     border-radius: 10px; 
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s; /* Transition pour les effets au survol */
     height: 36px;
     width: 60px;
     margin-left: auto; 
 }
 
 #logoutButton:hover {
-    background-color: #ffffff; 
-    color: #000000;
+    background-color: #4e34b6; /* Couleur de fond bleue au survol */
+    color: #ffffff; /* Couleur du texte blanche au survol */
 }
 
 #submit {
-    background-color: #4e34b6;
-    color: white;
-    border: none;
+    border: 1px solid #4e34b6; /* Bordure bleue */
+    background-color: transparent; /* Fond transparent */
+    color: #ffffff; /* Couleur du texte */
     padding: 8px 12px; 
     border-radius: 10px; 
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s; /* Transition pour les effets au survol */
     height: 36px;
     width: 60px;
     position: absolute; /* Positionner de manière absolue */
@@ -187,8 +188,8 @@ input:focus {
 }
 
 #submit:hover {
-    background-color: #ffffff; 
-    color: #4e34b6;
+    background-color: #4e34b6; /* Couleur de fond bleue au survol */
+    color: #ffffff; /* Couleur du texte blanche au survol */
 }
 
 #postForm, .post {
@@ -196,29 +197,36 @@ input:focus {
     border: 1px solid #4e34b6;
     border-radius: 5px;
     padding: 8px 12px;
-    margin: 1rem auto; /* Center the form */
+    margin: 1rem auto;
     min-height: 200px;
     padding-bottom: 50px;
+    display: flex; /* Utiliser flexbox pour la disposition */
+    flex-direction: column; /* Alignement vertical */
 }
 
 #postForm input[type="text"] {
-    width: 720px; /* Full width */
-    height: 40px; /* Fixed height for the title input */
-    padding: 12px; /* Padding inside the input */
-    border: 1px solid #ddd; /* Light border */
-    border-radius: 5px; /* Rounded corners */
-    margin-bottom: 15px; /* Space below the input */
-    transition: border-color 0.3s; /* Smooth border color transition */
+    width: 720px; /* Largeur complète */
+    height: 40px; /* Hauteur fixe pour l'input du titre */
+    padding: 12px; /* Espacement interne */
+    border: 1px solid #4e34b6; /* Bordure bleue */
+    border-radius: 5px; /* Coins arrondis */
+    margin-bottom: 15px; /* Espace en bas */
+    transition: border-color 0.3s; /* Transition douce pour la couleur de la bordure */
+    background: transparent; /* Fond transparent */
+    color: #ffffff; /* Couleur du texte */
 }
 
+
 #postForm textarea {
-    width: 720px;
-    height: 100px; /* Fixed height for the textarea */
-    padding: 12px; /* Padding inside the textarea */
-    border: 1px solid #ddd; /* Light border */
-    border-radius: 5px; /* Rounded corners */
-    margin-bottom: 15px; /* Space below the textarea */
-    transition: border-color 0.3s; /* Smooth border color transition */
+    width: 720px; /* Largeur complète */
+    height: 100px; /* Hauteur fixe pour la zone de texte */
+    padding: 12px; /* Espacement interne */
+    border: 1px solid #4e34b6; /* Bordure bleue */
+    border-radius: 5px; /* Coins arrondis */
+    margin-bottom: 15px; /* Espace en bas */
+    transition: border-color 0.3s; /* Transition douce pour la couleur de la bordure */
+    background: transparent; /* Fond transparent */
+    color: #ffffff; /* Couleur du texte */
 }
 
 #postForm input[type="text"]:focus,
@@ -239,7 +247,7 @@ input:focus {
     padding: 4px 8px; 
     border-radius: 5px;
     margin: 5px; 
-    color: white;
+    color: #4e34b6;
     transition: background-color 0.3s, opacity 0.3s;
     cursor: pointer; 
 }
@@ -274,15 +282,16 @@ input:focus {
 
 .reaction-buttons {
     display: flex;
-    justify-content: space-between; /* Espacement entre les boutons */
-    margin-top: 10px; /* Espace au-dessus des boutons */
+    justify-content: space-between; /* Espacement entre les boutons *//* Espace au-dessus des boutons */
+    margin-top: auto; /* Pousse les boutons vers le bas */
+    padding: 10px 0; /* Espacement autour des boutons */
 }
 
 .reaction-buttons button {
-    background-color: #ffffff; /* Couleur de fond blanche */
-    border: 2px solid #007bff; /* Bordure bleue */
+    background-color: #000000; /* Couleur de fond blanche */
+    border: 1px solid #4e34b6; /* Bordure bleue */
     border-radius: 5px; /* Coins arrondis */
-    color: #007bff; /* Couleur du texte bleue */
+    color: #ffffff; /* Couleur du texte bleue */
     cursor: pointer; /* Curseur en main au survol */
     font-size: 16px; /* Taille de police */
     padding: 10px 15px; /* Espacement à l'intérieur des boutons */
@@ -291,14 +300,58 @@ input:focus {
 }
 
 .reaction-buttons button:hover {
-    background-color: #007bff; /* Couleur de fond bleue au survol */
-    color: #ffffff; /* Couleur du texte blanche au survol */
+    background-color: #4e34b6; /* Couleur de fond bleue au survol */
+    color: #000000; /* Couleur du texte blanche au survol */
 }
 
 .reaction-buttons button:last-child {
     margin-right: 0; /* Supprime l'espacement à droite pour le dernier bouton */
 }
 
+.filter-container {
+    position: absolute;  /* Position it absolutely on the left side */
+    border: 1px solid #4e34b6;
+    left: 0;             /* Align it to the left edge */
+    top: 127px;           /* Adjust vertical position to avoid overlapping with the fixed user bar */
+    margin-left: 20px;   /* Optional: adds some margin from the left edge */
+    display: flex;       /* Use flexbox for vertical alignment */
+    flex-direction: column; /* Align filter options vertically */
+    align-items: flex-start; /* Align the items to the left */
+    background-color: #000000; /* Optional: background color */
+    border-radius: 5px;
+    padding: 8px 12px;
+    z-index: 1000;  /* Ensure the filter is on top of other elements */
+}
+
+.category-container {
+    width: 720px; /* Prend toute la largeur */
+    margin-bottom: 15px; 
+}
+
+#categoryFilter {
+    width: 200px; /* You can adjust the width to your liking */
+}
+
+
+.category-filter-label {
+    font-size: 16px; /* Taille de la police */
+}
+
+#categoryFilter {
+    border: 1px solid #4e34b6; /* Bordure bleue */
+    border-radius: 5px; /* Coins arrondis */
+    padding: 14px 20px; /* Espacement interne */
+    background: #000000; /* Couleur de fond */
+    color: #ffffff; /* Couleur du texte */
+    margin-top: 10px;
+    margin-bottom: 15px; /* Espace en bas */
+    transition: border-color 0.3s; /* Transition pour la couleur de la bordure */
+    width: 100%; /* Prend toute la largeur */
+}
+
+#categoryFilter:focus {
+    border-color: #4e34b6; /* Change la couleur de la bordure au focus */
+} 
 
 @media (max-width: 736px) {
     .main {
@@ -318,5 +371,9 @@ input:focus {
     #categoriesContainer {
         flex-direction: column; 
         align-items: flex-start; 
+    }
+
+    .category-container {
+        align-items: flex-start; /* Aligner à gauche sur les petits écrans */
     }
 }
