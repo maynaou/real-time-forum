@@ -277,36 +277,37 @@ input:focus {
     max-width: 100%;
     line-height: 1.6; 
     text-align: left; 
-    padding: 0 10px;
+    padding: 0 0px;
+    bottom: 100%;
 }
 
 .reaction-buttons {
     display: flex;
-    justify-content: space-between; /* Espacement entre les boutons *//* Espace au-dessus des boutons */
-    margin-top: auto; /* Pousse les boutons vers le bas */
+    justify-content: center; /* Centrer les boutons */
+    position: absolute; 
+    top: 82%; /* Ajustez si nécessaire pour la position verticale */
+    left: 0; /* Aligner à gauche */
+    width: 100%; /* Prendre toute la largeur */
     padding: 10px 0; /* Espacement autour des boutons */
 }
 
 .reaction-buttons button {
-    background-color: #000000; /* Couleur de fond blanche */
+    background-color: #000000; /* Couleur de fond noire */
     border: 1px solid #4e34b6; /* Bordure bleue */
     border-radius: 5px; /* Coins arrondis */
-    color: #ffffff; /* Couleur du texte bleue */
+    color: #ffffff; /* Couleur du texte blanche */
     cursor: pointer; /* Curseur en main au survol */
     font-size: 16px; /* Taille de police */
     padding: 10px 15px; /* Espacement à l'intérieur des boutons */
-    margin-right: 10px; /* Espacement entre les boutons */
+    margin: 0 10px; /* Espacement entre les boutons */
     transition: background-color 0.3s, color 0.3s; /* Transition pour l'effet au survol */
 }
 
 .reaction-buttons button:hover {
     background-color: #4e34b6; /* Couleur de fond bleue au survol */
-    color: #000000; /* Couleur du texte blanche au survol */
+    color: #000000; /* Couleur du texte noire au survol */
 }
 
-.reaction-buttons button:last-child {
-    margin-right: 0; /* Supprime l'espacement à droite pour le dernier bouton */
-}
 
 .filter-container {
     position: absolute;  /* Position it absolutely on the left side */
