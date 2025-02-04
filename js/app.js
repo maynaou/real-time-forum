@@ -76,12 +76,12 @@ class LoginForm {
         if (isEmail) {
             user = {
                 email: data.NicknameOREmail,
-                password : data.password,
+                password: data.password,
             }
-        }else {
+        } else {
             user = {
-              nickname : data.NicknameOREmail,
-              password : data.password,
+                nickname: data.NicknameOREmail,
+                password: data.password,
             }
         }
 
@@ -95,14 +95,14 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
-            const result =await response.json()
+            const result = await response.json()
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
-            
+
 
             alert('Login successful!');
-            sessionStorage.setItem('username', result.username); 
+            sessionStorage.setItem('username', result.username);
             new ForumPage();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -194,7 +194,7 @@ class ForumPage {
         ];
         this.posts = [];
         this.selectedCategories = [];
-        this.maxCategories = 3; 
+        this.maxCategories = 3;
         this.likePost = this.likePost.bind(this);
         this.dislikePost = this.dislikePost.bind(this);
         this.render();
@@ -218,6 +218,8 @@ class ForumPage {
         <select id="categoryFilter">
             <option value="">All Categories</option>
             ${this.category.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
+             <option value="myposts">My Own Posts</option>
+              <option value="likedposts">The Posts That I Liked</option>
         </select>
     </div>
 </div>
@@ -230,9 +232,9 @@ class ForumPage {
             <div id="postsContainer">
             </div>
         `;
-       
 
-        this.renderCategories(); 
+
+        this.renderCategories();
         document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
@@ -245,34 +247,35 @@ class ForumPage {
 
     async fetchPosts() {
         try {
-            const response = await fetch('/api/posts', {
+            const response = await fetch('/api/post', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
+
             const result = await response.json();
             if (!response.ok) {
                 throw new Error(result.message || 'Failed to fetch posts');
             }
-    
             this.posts = result.map(post => ({
-                username:post.username,
+                username: post.username,
                 title: post.title,
                 content: post.content,
-                category: post.category, 
+                category: post.category,
                 created_at: post.created_at,
                 likes: post.likes || 0,
                 dislikes: post.dislikes || 0,
                 id: post.id,
-                isLiked: false,
                 isDisliked: false,
+                isLiked: post.isLiked,
             }));
 
-            console.log("Posts after adding new post:", this.posts); 
-    
-            this.displayPosts(); 
+
+
+            console.log("Posts after adding new post:", this.posts);
+
+            this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -293,7 +296,7 @@ class ForumPage {
             label.append(document.createTextNode(category.name));
             label.style.backgroundColor = category.color;
             label.classList.add("category-label");
-            
+
             checkbox.addEventListener("change", () => {
                 this.handleCategoryChange(checkbox);
             });
@@ -307,7 +310,7 @@ class ForumPage {
             if (this.selectedCategories.length < this.maxCategories) {
                 this.selectedCategories.push(checkbox.value);
             } else {
-                checkbox.checked = false; 
+                checkbox.checked = false;
             }
         } else {
             const index = this.selectedCategories.indexOf(checkbox.value);
@@ -333,19 +336,19 @@ class ForumPage {
             username: this.getUsername(),
             title: formData.get('title'),
             content: formData.get('content'),
-            category: [...this.selectedCategories], 
+            category: [...this.selectedCategories],
             created_at: new Date().toISOString(),
         };
 
-       
+
 
         try {
             const response = await fetch('/api/post', {
-                method: 'post',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body : JSON.stringify(data),
+                body: JSON.stringify(data),
             });
 
             const result = await response.json();
@@ -358,45 +361,43 @@ class ForumPage {
             }
 
             alert("post secced");
-            this.posts.unshift({
-                id: result.id,
-                username: result.username,
-                title: result.title,
-                content: result.content,
-                category: result.category,
-                created_at: result.created_at,
-                likes: result.likes,
-                dislikes: result.dislikes,
-                isLiked: false,
-                isDisliked: false,
-            });
-     // Add the new post to the beginning
-            console.log("Posts after adding new post:", this.posts); 
+            this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
+            document.getElementById('categoryFilter').value = '';
+            // Add the new post to the beginning
+            console.log("Posts after adding new post:", this.posts);
             this.displayPosts();
             event.target.reset();
-            this.selectedCategories = []; 
+            this.selectedCategories = [];
             this.renderCategories();
         } catch (error) {
             alert('Error: ' + error.message);
         }
-       
+
     }
 
     filterPosts() {
         const categoryFilter = document.getElementById('categoryFilter').value;
-        const filteredPosts = this.posts.filter(post => {
-            const matchesCategory = categoryFilter ? post.category.includes(categoryFilter) : true;
-            return matchesCategory;
-        });
-    
+        let filteredPosts;
+
+        if (categoryFilter === "myposts") {
+            const username = this.getUsername();
+            filteredPosts = this.posts.filter(post => post.username === username);
+            console.log(username);
+
+        } else if (categoryFilter === "likedposts") {
+            filteredPosts = this.posts.filter(post => post.isLiked);
+        } else {
+            filteredPosts = this.posts;
+        }
+
         this.displayPosts(filteredPosts);
     }
 
     displayPosts(postsToDisplay = this.posts) {
         const postsContainer = document.getElementById('postsContainer');
         postsContainer.innerHTML = '';
-       
-           postsToDisplay.forEach((post) => {
+
+        postsToDisplay.forEach((post) => {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             const formattedDate = formatDate(new Date(post.created_at));
@@ -404,37 +405,43 @@ class ForumPage {
             const likeCount = post.likes || 0;
 
             const dislikeCount = post.dislikes || 0;
-    
+
             postElement.innerHTML = `
-                <h4 style="font-weight: bold; color: #007bff;">${post.username}</h4>
-                <p style="font-size: 12px; color: gray;">${TimeAgo}</p>
-                <h3 style="font-size: 25px">${post.title}</h3>
+               <div class="user-info">
+    <div class="avatar">
+        <img src="../styles/user.png" alt="User Avatar">
+    </div>
+    <h4>${post.username}</h4>
+    <p>${TimeAgo}</p>
+</div>
+  
+                <h3>${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>
                 <p style="font-size: 12px; color: gray;">${formattedDate}</p>
     
                 <div class="reaction-buttons">
-                    <button class="like-button" style="${post.isLiked ? 'color: green;' : ''}">👍 ${likeCount}</button>
+                    <button class="like-button" style="${post.isLiked ? 'color: blue;' : ''}">👍 ${likeCount}</button>
                     <button class="dislike-button"  style="${post.isDisliked ? 'color: red;' : ''}">👎 ${dislikeCount}</button>
                     <button class="comment-button">💬 Comment</button>
                 </div>
             `;
 
             postElement.querySelector('.like-button').addEventListener('click', () => {
-                this.likePost(post.id); 
+                this.likePost(post.id);
             });
 
             postElement.querySelector('.dislike-button').addEventListener('click', () => {
-                this.dislikePost(post.id); 
+                this.dislikePost(post.id);
             });
-             
+
             postsContainer.appendChild(postElement);
         });
     }
-    
 
-  async likePost(postId) {
-    
+
+    async likePost(postId) {
+
         try {
             const response = await fetch('/api/like', {
                 method: 'POST',
@@ -448,20 +455,20 @@ class ForumPage {
                 throw new Error('Failed to like the post');
             }
 
-        // Récupérer le post mis à jour
-        const result = await response.json();
-        const post = this.posts.find(p => p.id === postId);
+            // Récupérer le post mis à jour
+            const result = await response.json();
+            const post = this.posts.find(p => p.id === postId);
 
-        if (post) {
-            post.likes = result.likes; // Mettre à jour le nombre de likes
-            post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-            post.isLiked = !post.isLiked; // Inverser l'état de like
+            if (post) {
+                post.likes = result.likes; // Mettre à jour le nombre de likes
+                post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+                post.isLiked = !post.isLiked; // Inverser l'état de like
 
-            // Si l'utilisateur a aimé, réinitialiser l'état de dislike
-            if (post.isLiked) {
-                post.isDisliked = false; 
+                // Si l'utilisateur a aimé, réinitialiser l'état de dislike
+                if (post.isLiked) {
+                    post.isDisliked = false;
+                }
             }
-        }
             this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -469,7 +476,7 @@ class ForumPage {
     }
 
     async dislikePost(postId) {
-        
+
         try {
             const response = await fetch('/api/dislike', {
                 method: 'POST',
@@ -483,20 +490,20 @@ class ForumPage {
                 throw new Error('Failed to dislike the post');
             }
 
-        // Récupérer le post mis à jour
-        const result = await response.json();
-        const post = this.posts.find(p => p.id === postId);
+            // Récupérer le post mis à jour
+            const result = await response.json();
+            const post = this.posts.find(p => p.id === postId);
 
-        if (post) {
-            post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-            post.likes = result.likes; // Mettre à jour le nombre de likes
-            post.isDisliked = !post.isDisliked; // Inverser l'état de dislike
+            if (post) {
+                post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+                post.likes = result.likes; // Mettre à jour le nombre de likes
+                post.isDisliked = !post.isDisliked; // Inverser l'état de dislike
 
-            // Si l'utilisateur a disliké, réinitialiser l'état de like
-            if (post.isDisliked) {
-                post.isLiked = false; 
+                // Si l'utilisateur a disliké, réinitialiser l'état de like
+                if (post.isDisliked) {
+                    post.isLiked = false;
+                }
             }
-        }
 
             this.displayPosts();
         } catch (error) {
@@ -507,7 +514,7 @@ class ForumPage {
     getCategoryElements(categoriesArray) {
         return categoriesArray.map(categoryName => {
             const category = this.category.find(cat => cat.name === categoryName);
-            const color = category ? category.color : 'gray'; 
+            const color = category ? category.color : 'gray';
             return `
                 <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
                     ${categoryName}
@@ -559,7 +566,7 @@ function timeAgo(date) {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(seconds / 3600);
     const days = Math.floor(seconds / 86400);
-    const months = Math.floor(seconds / 2592000); 
+    const months = Math.floor(seconds / 2592000);
     const years = Math.floor(seconds / 31536000);
 
     if (seconds < 60) return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;

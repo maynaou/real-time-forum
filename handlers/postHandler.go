@@ -13,16 +13,9 @@ import (
 func Post(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		createPost(w, r)
-	} else {
-		ShowErrorPage(w, "methode not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-}
-
-func Posts(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	}else if r.Method == http.MethodGet {
 		getPosts(w, r)
-	} else {
+	}else {
 		ShowErrorPage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -76,8 +69,8 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		"content":    post.Content,
 		"category":   post.Categories,
 		"created_at": post.CreatedAt,
-		"likes":      0, // Initialiser à 0
-		"dislikes":   0, // Initialiser à 0
+		"likes":      0, 
+		"dislikes":   0, 
 	}
 
 	data, err := json.Marshal(response)
@@ -93,7 +86,12 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := models.GetAllPosts()
+	user, ok := utils.GetUserFromSession(r)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	posts, err := models.GetAllPosts(user.ID)
 
 	if err != nil {
 		fmt.Printf("Failed to marshal posts: %v", err)

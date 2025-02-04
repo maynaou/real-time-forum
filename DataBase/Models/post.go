@@ -19,6 +19,7 @@ type Post struct {
 	CreatedAt  time.Time `json:"created_at"`
 	Likes      int       `json:"likes"`
 	Dislikes   int       `json:"dislikes"`
+	IsLiked    bool      `json:"isLiked"`
 }
 
 func CreatePost(post Post, user RegisterRequest) (string, error) {
@@ -51,7 +52,7 @@ func CreatePost(post Post, user RegisterRequest) (string, error) {
 
 }
 
-func GetAllPosts() ([]Post, error) {
+func GetAllPosts(userID string) ([]Post, error) {
 	db := database.GetDatabaseInstance()
 
 	if db == nil || db.DB == nil {
@@ -61,6 +62,16 @@ func GetAllPosts() ([]Post, error) {
 	}
 	context, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	likedPostIDs, err := GetLikedPostIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	likedPostMap := make(map[string]bool)
+	for _, id := range likedPostIDs {
+		likedPostMap[id] = true
+	}
 
 	query := `
 	SELECT
@@ -102,7 +113,7 @@ func GetAllPosts() ([]Post, error) {
 		}
 
 		post.Categories = strings.Split(categoriesStr, ",")
-
+		post.IsLiked = likedPostMap[post.ID]
 		posts = append(posts, post)
 	}
 
@@ -112,4 +123,37 @@ func GetAllPosts() ([]Post, error) {
 	}
 
 	return posts, nil
+}
+
+func GetLikedPostIDs(userID string) ([]string, error) {
+	fmt.Println("hhhhhhh")
+	db := database.GetDatabaseInstance()
+	if db == nil || db.DB == nil {
+		log.Fatal("Database connection error")
+		return nil, fmt.Errorf("database connection error")
+	}
+	context, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := "SELECT post_id FROM liked_posts WHERE user_id = ?"
+	rows, err := db.DB.QueryContext(context, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
+	}
+	defer rows.Close()
+
+	var likedPostIDs []string
+	for rows.Next() {
+		var postID string
+		if err := rows.Scan(&postID); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+		likedPostIDs = append(likedPostIDs, postID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to retrieve rows: %v", err)
+	}
+
+	return likedPostIDs, nil
 }

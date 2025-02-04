@@ -99,3 +99,15 @@ func ValidationPostInput(post models.Post) map[string]string {
 
 	return errors
 }
+
+func ValidateCommentInput(comment models.Comment) map[string]string {
+	errors := make(map[string]string)
+
+	if comment.Content == "" {
+		errors["content"] = "comment cannot be empty"
+	} else if len(comment.Content) > 250 {
+		errors["content"] = "comment cannot exceed 250 characters"
+	}
+
+	return errors
+}

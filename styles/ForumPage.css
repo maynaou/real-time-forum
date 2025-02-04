@@ -134,6 +134,7 @@ input:focus {
     justify-content: space-between;
     align-items: center;
     border: 1px solid #4e34b6;
+    background-color: #1a1a1a; /* Couleur de fond pour la publication */
     width: 100%;
     position: fixed; /* Fixed at the top */
     top: 0; 
@@ -156,8 +157,7 @@ input:focus {
 
 #logoutButton {
     border: 1px solid #4e34b6; /* Bordure bleue */
-    background-color: transparent; /* Fond transparent */
-    color: #ffffff; /* Couleur du texte */
+    background-color: #000000; /* Couleur de fond pour la publication */
     padding: 8px 12px; 
     border-radius: 10px; 
     cursor: pointer;
@@ -183,7 +183,7 @@ input:focus {
     height: 36px;
     width: 60px;
     position: absolute; /* Positionner de manière absolue */
-    bottom: 10px; /* Ajuster la distance du bas */
+    bottom: 4px; /* Ajuster la distance du bas */
     right: 10px; /* Ajuster la distance de droite */
 }
 
@@ -199,9 +199,9 @@ input:focus {
     padding: 8px 12px;
     margin: 1rem auto;
     min-height: 200px;
-    padding-bottom: 50px;
     display: flex; /* Utiliser flexbox pour la disposition */
     flex-direction: column; /* Alignement vertical */
+    background-color: #1a1a1a; /* Couleur de fond pour la publication */
 }
 
 #postForm input[type="text"] {
@@ -261,35 +261,67 @@ input:focus {
     cursor: not-allowed;
 }
 
+.user-info {
+    display: flex; /* Flexbox pour alignement */
+    align-items: center; /* Centre les éléments verticalement */
+}
 
-.post h3,h4 {
-    font-size: 1.2rem;
+.avatar {
+    width: 40px; /* Largeur de l'avatar */
+    height: 40px; /* Hauteur de l'avatar */
+    border-radius: 50%; /* Rond pour l'image */
+    display: flex; /* Flexbox pour centrer */
+    justify-content: center; /* Centre horizontalement */
+    align-items: center; /* Centre verticalement */
+    overflow: hidden; /* Couper tout débordement */
+    margin-right: 10px; /* Espace entre l'avatar et le nom d'utilisateur */
+}
+
+.avatar img {
+    width: 100%; /* Prendre toute la largeur de l'élément parent */
+    height: auto; /* Garder les proportions */
+}
+
+.user-info h4 {
+    font-size: 1.2rem; /* Taille du nom d'utilisateur */
+    font-weight: normal; /* Poids normal */
+    color: #2366e2; /* Couleur du nom d'utilisateur */
+    margin: 0; /* Supprimer la marge par défaut */
+}
+
+.user-info p {
+    font-size: 12px; /* Taille pour le timestamp */
+    padding: 0 6px; /* Padding */
+    color: gray; /* Couleur pour le timestamp */
+    margin: 0; /* Supprimer la marge par défaut */
+}
+
+.post h3 {
+    font-size: 1.5rem; /* Taille du titre */
     font-weight: bold;
-    margin-bottom: 10px;
-    color: #ffffff;
+    margin-bottom: 8px; /* Espacement en bas */
+    color: #cfcae0; /* Couleur du titre */
     text-align: left;
-    padding: 0 10px;
+    padding: 0 6px;
 }
 
 .post p {
-    color: #ffffff;
+    color: #ffffff; /* Couleur du texte */
+    font-style: italic; /* Style en italique pour le contenu */
     word-wrap: break-word; 
     max-width: 100%;
     line-height: 1.6; 
     text-align: left; 
-    padding: 0 0px;
-    bottom: 100%;
+    padding: 0 6px;
 }
 
 .reaction-buttons {
     display: flex;
     justify-content: center; /* Centrer les boutons */
-    position: absolute; 
-    top: 82%; /* Ajustez si nécessaire pour la position verticale */
-    left: 0; /* Aligner à gauche */
-    width: 100%; /* Prendre toute la largeur */
     padding: 10px 0; /* Espacement autour des boutons */
+    margin-top: auto; /* Pousse les boutons vers le bas */
 }
+
 
 .reaction-buttons button {
     background-color: #000000; /* Couleur de fond noire */
@@ -299,7 +331,7 @@ input:focus {
     cursor: pointer; /* Curseur en main au survol */
     font-size: 16px; /* Taille de police */
     padding: 10px 15px; /* Espacement à l'intérieur des boutons */
-    margin: 0 10px; /* Espacement entre les boutons */
+    margin: 0 2px; /* Espacement entre les boutons */
     transition: background-color 0.3s, color 0.3s; /* Transition pour l'effet au survol */
 }
 
@@ -312,13 +344,14 @@ input:focus {
 .filter-container {
     position: absolute;  /* Position it absolutely on the left side */
     border: 1px solid #4e34b6;
+    background-color: #1a1a1a; /* Couleur de fond pour la publication */
     left: 0;             /* Align it to the left edge */
     top: 127px;           /* Adjust vertical position to avoid overlapping with the fixed user bar */
     margin-left: 20px;   /* Optional: adds some margin from the left edge */
     display: flex;       /* Use flexbox for vertical alignment */
     flex-direction: column; /* Align filter options vertically */
     align-items: flex-start; /* Align the items to the left */
-    background-color: #000000; /* Optional: background color */
+   /* Optional: background color */
     border-radius: 5px;
     padding: 8px 12px;
     z-index: 1000;  /* Ensure the filter is on top of other elements */
