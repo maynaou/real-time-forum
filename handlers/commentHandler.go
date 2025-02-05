@@ -22,6 +22,7 @@ func Comment(w http.ResponseWriter, r *http.Request) {
 }
 
 func createComment(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hhhhhh")
 	var comment models.Comment
 	comment.ID = uuid.New().String()
 
@@ -38,6 +39,8 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Println("hhh", comment)
 
 	validationErrors := utils.ValidateCommentInput(comment)
 	if len(validationErrors) > 0 {
@@ -56,7 +59,20 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(comment)
+	fmt.Println("comment", comment)
+
+	response := map[string]interface{}{
+		"id":         comment.ID,
+		"username":   user.Nickname, // Assurez-vous de renvoyer le bon username
+		"post_id":    comment.PostID,
+		"user_id":    user.ID,
+		"content":    comment.Content,
+		"created_at": comment.CreatedAt,
+		"likes":      0, 
+		"dislikes":   0, 
+	}
+
+	data, err := json.Marshal(response)
 	if err != nil {
 		fmt.Printf("Failed to marshal comment: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -71,7 +87,7 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 
 func getComment(w http.ResponseWriter, r *http.Request) {
 	postID := r.Header.Get("X-Requested-With")
-
+	fmt.Println("post", postID)
 	comment, err := models.GetCommentsByPostID(postID)
 	if err != nil {
 		if err == sql.ErrNoRows {

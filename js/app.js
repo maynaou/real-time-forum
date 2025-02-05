@@ -193,6 +193,7 @@ class ForumPage {
             { name: "Innovation", color: "rgb(186, 85, 211)" }, // Medium Orchid
         ];
         this.posts = [];
+        this.comments =[]
         this.selectedCategories = [];
         this.maxCategories = 3;
         this.likePost = this.likePost.bind(this);
@@ -209,34 +210,14 @@ class ForumPage {
                 <h1>Real-Time-Forum</h1>
                 <span id="logged-in-label">${this.getUsername()}<span>
                 <button id="logoutButton">❌</button>
-
             </div>
             
-<div class="filter-container">
-    <div class="category-container">
-        <label class="category-filter-label" for="categoryFilter">Filter by Category:</label>
-        <select id="categoryFilter">
-            <option value="">All Categories</option>
-            ${this.category.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
-             <option value="myposts">My Own Posts</option>
-              <option value="likedposts">The Posts That I Liked</option>
-        </select>
-    </div>
-</div>
-                <form id="postForm">
-                    <input type="text" name="title" placeholder="Title:" required>
-                    <textarea name="content" placeholder="What is happening?!" required></textarea>
-                    <div id="categoriesContainer"></div> <!-- Category selection here -->
-                    <button id="submit" type="submit">Post</button>
-                </form>
             <div id="postsContainer">
             </div>
         `;
 
 
-        this.renderCategories();
-        document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
-        document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
+        this.resetView()
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
     }
 
@@ -245,12 +226,83 @@ class ForumPage {
         return sessionStorage.getItem('username') || "Guest" // Example placeholder
     }
 
+
+    resetView() {
+        const forumContainer = document.getElementById('formContainer');
+
+        if (!document.getElementById('postForm')) {
+            forumContainer.insertAdjacentHTML('afterbegin', `
+                <form id="postForm">
+                    <input type="text" name="title" placeholder="Title:" required>
+                    <textarea name="content" placeholder="What is happening?!" required></textarea>
+                    <div id="categoriesContainer"></div> <!-- Category selection here -->
+                    <button id="submit" type="submit">Post</button>
+                </form>
+            `);
+        }
+
+        if (!document.getElementById('filter-container')) {
+            forumContainer.insertAdjacentHTML('afterbegin', `
+                <div id="filter-container" class="filter-container">
+                    <div class="category-container">
+                        <label class="category-filter-label" for="categoryFilter">Filter by Category:</label>
+                        <select id="categoryFilter">
+                            <option value="">All Categories</option>
+                            ${this.category.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('')}
+                            <option value="myposts">My Own Posts</option>
+                            <option value="likedposts">The Posts That I Liked</option>
+                        </select>
+                    </div>
+                </div>
+            `);
+        }
+        this.renderCategories()
+        document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
+        document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
+    }
+
+    async fetchComment(postId) {
+        try {
+            const response = await fetch('/api/comment', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-Requested-With": postId,
+                },
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to fetch posts');
+            }
+            
+            this.comments = result.map( comment => ({
+                username: comment.username,
+                content: comment.content,
+                created_at: comment.created_at,
+                id: comment.id,
+                likes: comment.likes || 0,
+                dislikes: comment.dislikes || 0,
+            }));
+
+
+
+            console.log("comment after adding new post:", this.comments);
+
+            this.renderComments();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+   
+
     async fetchPosts() {
         try {
             const response = await fetch('/api/post', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                   
                 },
             });
 
@@ -377,6 +429,7 @@ class ForumPage {
 
     filterPosts() {
         const categoryFilter = document.getElementById('categoryFilter').value;
+        console.log(categoryFilter)
         let filteredPosts;
 
         if (categoryFilter === "myposts") {
@@ -386,6 +439,8 @@ class ForumPage {
 
         } else if (categoryFilter === "likedposts") {
             filteredPosts = this.posts.filter(post => post.isLiked);
+        } else if (categoryFilter) { 
+            filteredPosts = this.posts.filter(post => post.category && post.category.includes(categoryFilter));
         } else {
             filteredPosts = this.posts;
         }
@@ -426,6 +481,10 @@ class ForumPage {
                     <button class="comment-button">💬 Comment</button>
                 </div>
             `;
+            postElement.querySelector('.comment-button').addEventListener('click', () => {
+                this.showPostDetails(post.id);
+                this.fetchComment(post.id)
+            });
 
             postElement.querySelector('.like-button').addEventListener('click', () => {
                 this.likePost(post.id);
@@ -439,7 +498,134 @@ class ForumPage {
         });
     }
 
+    async showPostDetails(postId) {
+        const categoryContainer = document.querySelector('.filter-container');
+        const postForm = document.getElementById('postForm');
 
+        // Videz le contenu de ces éléments
+        if (categoryContainer) {
+            categoryContainer.remove();
+        }
+        if (postForm) {
+            postForm.remove();
+        }
+        const post = this.posts.find(p => p.id === postId);
+        if (!post) return;
+
+        const postsContainer = document.getElementById('postsContainer');
+        postsContainer.innerHTML = `
+            <div class="post">
+                <div class="user-info">
+                    <div class="avatar">
+                        <img src="../styles/user.png" alt="User Avatar">
+                    </div>
+                    <h4>${post.username}</h4>
+                    <p>${timeAgo(new Date(post.created_at))}</p>
+                </div>
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <p>${this.getCategoryElements(post.category)}</p>
+                <p style="font-size: 12px; color: gray;">${formatDate(new Date(post.created_at))}</p>
+            </div>
+                 <div  id="postForm">
+                <input type="text" id="comment-input-${postId}" placeholder="Votre commentaire" />
+                    <div class="reaction-buttons">
+                    <button class="like-button" id="add-comment-button-${postId}">Ajouter un commentaire</button>
+                    <button class="dislike-button" id="back-button">Retour</button>
+                </div>
+                </div>
+            <div id="comments-list">
+            </div>
+
+        `;
+
+
+
+        this.renderComments(); // Afficher les commentaires existants
+
+        // Événements pour ajouter un commentaire
+        document.getElementById(`add-comment-button-${postId}`).addEventListener('click', () => {
+            const commentInput = document.getElementById(`comment-input-${postId}`);
+            console.log(commentInput.value);
+
+            this.addComment(postId, commentInput.value);
+            commentInput.value = ''; // Réinitialiser le champ de saisie
+        });
+
+
+        // Événement pour revenir à la liste des posts
+        document.getElementById('back-button').addEventListener('click', () => {
+            this.displayPosts(); // Retourner à l'affichage des posts
+            this.resetView()
+        });
+    }
+
+    renderComments() {
+
+        const commentsList = document.getElementById(`comments-list`);
+        commentsList.innerHTML = ''
+
+        this.comments.forEach((comment) => {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'post';
+            const formattedDate = formatDate(new Date(comment.created_at));
+            const TimeAgo = timeAgo(new Date(comment.created_at));
+            const likeCount = comment.likes || 0;
+            const dislikeCount = comment.dislikes || 0;
+            commentElement.innerHTML =  `
+                <div class="user-info">
+                <div class="avatar">
+                    <img src="../styles/user.png" alt="User Avatar" style="width: 30px; height: 30px;">
+                </div>
+                    <h4>${comment.username}</h4> <!-- Utiliser le nom d'utilisateur du post si non spécifié -->
+                    <p>${TimeAgo}</p>
+                </div>
+                <p>${comment.content}</p>
+                <p style="font-size: 12px; color: gray;">${formattedDate}</p>
+                 <div class="reaction-buttons">
+                    <button class="like-button" >👍 ${likeCount}</button>
+                    <button class="dislike-button">👎 ${dislikeCount}</button>
+                </div>
+            `       
+             commentElement.querySelector('.like-button').addEventListener('click', () => {
+                this.likePost(comment.id);
+            });
+    
+            commentElement.querySelector('.dislike-button').addEventListener('click', () => {
+                this.dislikePost(comment.id);
+            });
+            
+            commentsList.appendChild(commentElement)
+        })}
+
+    async addComment(postId, comment) {
+        if (!comment) return;
+        try {
+            const response = await fetch(`/api/comment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ post_id: postId, content: comment ,created_at:new Date().toISOString(),}),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors de l\'ajout du commentaire');
+            }
+
+            const newComment = await response.json();
+
+            this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
+
+            console.log(this.comments);
+            
+            this.renderComments(postId);
+        } catch (error) {
+            console.log("HHHHHHHHH");
+
+            alert('Erreur: ' + error.message);
+        }
+    }
     async likePost(postId) {
 
         try {
@@ -458,8 +644,9 @@ class ForumPage {
             // Récupérer le post mis à jour
             const result = await response.json();
             const post = this.posts.find(p => p.id === postId);
-
+            const comment = this.comments.find(c => c.id === postId)
             if (post) {
+                
                 post.likes = result.likes; // Mettre à jour le nombre de likes
                 post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
                 post.isLiked = !post.isLiked; // Inverser l'état de like
@@ -468,8 +655,14 @@ class ForumPage {
                 if (post.isLiked) {
                     post.isDisliked = false;
                 }
+                this.displayPosts();
+            }else {
+            comment.likes = result.likes;
+            comment.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+
+                this.renderComments()
             }
-            this.displayPosts();
+           
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -493,7 +686,7 @@ class ForumPage {
             // Récupérer le post mis à jour
             const result = await response.json();
             const post = this.posts.find(p => p.id === postId);
-
+            const comment = this.comments.find(c => c.id === postId)
             if (post) {
                 post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
                 post.likes = result.likes; // Mettre à jour le nombre de likes
@@ -503,9 +696,13 @@ class ForumPage {
                 if (post.isDisliked) {
                     post.isLiked = false;
                 }
+                this.displayPosts();
+            }else {
+                comment.dislikes = result.dislikes; 
+                comment.likes = result.likes;
+                this.renderComments()
             }
 
-            this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
         }

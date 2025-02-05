@@ -192,7 +192,7 @@ input:focus {
     color: #ffffff; /* Couleur du texte blanche au survol */
 }
 
-#postForm, .post {
+#postForm, .post{
     position: relative;
     border: 1px solid #4e34b6;
     border-radius: 5px;
@@ -356,6 +356,7 @@ input:focus {
     padding: 8px 12px;
     z-index: 1000;  /* Ensure the filter is on top of other elements */
 }
+
 
 .category-container {
     width: 720px; /* Prend toute la largeur */
