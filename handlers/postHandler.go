@@ -69,6 +69,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		"content":    post.Content,
 		"category":   post.Categories,
 		"created_at": post.CreatedAt,
+		"comments":   0,
 		"likes":      0, 
 		"dislikes":   0, 
 	}

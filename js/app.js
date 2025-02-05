@@ -318,6 +318,7 @@ class ForumPage {
                 created_at: post.created_at,
                 likes: post.likes || 0,
                 dislikes: post.dislikes || 0,
+                comments: post.comments || 0,
                 id: post.id,
                 isDisliked: false,
                 isLiked: post.isLiked,
@@ -335,6 +336,10 @@ class ForumPage {
 
     renderCategories() {
         const categoriesContainer = document.getElementById('categoriesContainer');
+        if (!categoriesContainer) {
+            console.error('categoriesContainer is not found in the DOM.');
+            return; // Sortir de la fonction si l'élément n'existe pas
+        }
         categoriesContainer.innerHTML = '';
 
         this.category.forEach((category) => {
@@ -458,7 +463,7 @@ class ForumPage {
             const formattedDate = formatDate(new Date(post.created_at));
             const TimeAgo = timeAgo(new Date(post.created_at));
             const likeCount = post.likes || 0;
-
+            const commentCount = post.comments || 0;
             const dislikeCount = post.dislikes || 0;
 
             postElement.innerHTML = `
@@ -478,7 +483,7 @@ class ForumPage {
                 <div class="reaction-buttons">
                     <button class="like-button" style="${post.isLiked ? 'color: blue;' : ''}">👍 ${likeCount}</button>
                     <button class="dislike-button"  style="${post.isDisliked ? 'color: red;' : ''}">👎 ${dislikeCount}</button>
-                    <button class="comment-button">💬 Comment</button>
+                    <button class="comment-button">💬 ${commentCount}</button>
                 </div>
             `;
             postElement.querySelector('.comment-button').addEventListener('click', () => {
@@ -555,8 +560,12 @@ class ForumPage {
 
         // Événement pour revenir à la liste des posts
         document.getElementById('back-button').addEventListener('click', () => {
-            this.displayPosts(); // Retourner à l'affichage des posts
-            this.resetView()
+            this.fetchPosts();
+            this.displayPosts()
+            this.resetView();
+            console.log("jjjjjjj")
+            
+            
         });
     }
 
@@ -659,7 +668,7 @@ class ForumPage {
             }else {
             comment.likes = result.likes;
             comment.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-
+            
                 this.renderComments()
             }
            
