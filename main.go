@@ -10,7 +10,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8070"
+var port = "8075"
 
 func main() {
 

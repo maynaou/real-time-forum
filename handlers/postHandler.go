@@ -53,7 +53,6 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 
 	post.ID, err = models.CreatePost(post, user)
 
-	fmt.Println(post)
 
 	if err != nil {
 		fmt.Printf("failed to marshal post data: %v", err)
