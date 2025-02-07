@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
-    new ShowHomePage();
+    const currentPage = sessionStorage.getItem('currentPage' || 'home')
+
+    navigateToPage(currentPage)
 
     document.body.addEventListener('click', function (event) {
         if (event.target.matches('#showRegister')) {
@@ -11,6 +13,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+function navigateToPage(page) {
+    switch (page) {
+        case 'login':
+            new LoginForm();
+            break;
+        case 'register':
+            new RegisterForm();
+            break;
+        case 'forum':
+            new ForumPage();
+            break;
+        default:
+            new ShowHomePage();
+            break;
+    }
+}
 
 class ShowHomePage {
     constructor() {
@@ -37,6 +56,7 @@ class ShowHomePage {
 class LoginForm {
     constructor() {
         this.render();
+        sessionStorage.setItem('currentPage','login');
     }
 
     render() {
@@ -113,6 +133,7 @@ class LoginForm {
 class RegisterForm {
     constructor() {
         this.render();
+        sessionStorage.setItem('currentPage','register');
     }
 
     render() {
@@ -193,12 +214,13 @@ class ForumPage {
             { name: "Innovation", color: "rgb(186, 85, 211)" }, // Medium Orchid
         ];
         this.posts = [];
-        this.comments =[]
+        this.comments = []
         this.selectedCategories = [];
         this.maxCategories = 3;
         this.likePost = this.likePost.bind(this);
         this.dislikePost = this.dislikePost.bind(this);
         this.render();
+        sessionStorage.setItem('currentPage','forum');
         this.fetchPosts();
     }
 
@@ -275,8 +297,8 @@ class ForumPage {
             if (!response.ok) {
                 throw new Error(result.message || 'Failed to fetch posts');
             }
-            
-            this.comments = result.map( comment => ({
+
+            this.comments = result.map(comment => ({
                 username: comment.username,
                 content: comment.content,
                 created_at: comment.created_at,
@@ -294,7 +316,7 @@ class ForumPage {
             alert('Error: ' + error.message);
         }
     }
-   
+
 
     async fetchPosts() {
         try {
@@ -302,7 +324,7 @@ class ForumPage {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                   
+
                 },
             });
 
@@ -444,7 +466,7 @@ class ForumPage {
 
         } else if (categoryFilter === "likedposts") {
             filteredPosts = this.posts.filter(post => post.isLiked);
-        } else if (categoryFilter) { 
+        } else if (categoryFilter) {
             filteredPosts = this.posts.filter(post => post.category && post.category.includes(categoryFilter));
         } else {
             filteredPosts = this.posts;
@@ -564,8 +586,8 @@ class ForumPage {
             this.displayPosts()
             this.resetView();
             console.log("jjjjjjj")
-            
-            
+
+
         });
     }
 
@@ -581,7 +603,7 @@ class ForumPage {
             const TimeAgo = timeAgo(new Date(comment.created_at));
             const likeCount = comment.likes || 0;
             const dislikeCount = comment.dislikes || 0;
-            commentElement.innerHTML =  `
+            commentElement.innerHTML = `
                 <div class="user-info">
                 <div class="avatar">
                     <img src="../styles/user.png" alt="User Avatar" style="width: 30px; height: 30px;">
@@ -595,17 +617,18 @@ class ForumPage {
                     <button class="like-button" >👍 ${likeCount}</button>
                     <button class="dislike-button">👎 ${dislikeCount}</button>
                 </div>
-            `       
-             commentElement.querySelector('.like-button').addEventListener('click', () => {
+            `
+            commentElement.querySelector('.like-button').addEventListener('click', () => {
                 this.likePost(comment.id);
             });
-    
+
             commentElement.querySelector('.dislike-button').addEventListener('click', () => {
                 this.dislikePost(comment.id);
             });
-            
+
             commentsList.appendChild(commentElement)
-        })}
+        })
+    }
 
     async addComment(postId, comment) {
         if (!comment) return;
@@ -615,7 +638,7 @@ class ForumPage {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ post_id: postId, content: comment ,created_at:new Date().toISOString(),}),
+                body: JSON.stringify({ post_id: postId, content: comment, created_at: new Date().toISOString(), }),
             });
 
             if (!response.ok) {
@@ -627,7 +650,7 @@ class ForumPage {
             this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
 
             console.log(this.comments);
-            
+
             this.renderComments(postId);
         } catch (error) {
             console.log("HHHHHHHHH");
@@ -655,7 +678,7 @@ class ForumPage {
             const post = this.posts.find(p => p.id === postId);
             const comment = this.comments.find(c => c.id === postId)
             if (post) {
-                
+
                 post.likes = result.likes; // Mettre à jour le nombre de likes
                 post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
                 post.isLiked = !post.isLiked; // Inverser l'état de like
@@ -665,13 +688,13 @@ class ForumPage {
                     post.isDisliked = false;
                 }
                 this.displayPosts();
-            }else {
-            comment.likes = result.likes;
-            comment.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-            
+            } else {
+                comment.likes = result.likes;
+                comment.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+
                 this.renderComments()
             }
-           
+
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -706,8 +729,8 @@ class ForumPage {
                     post.isLiked = false;
                 }
                 this.displayPosts();
-            }else {
-                comment.dislikes = result.dislikes; 
+            } else {
+                comment.dislikes = result.dislikes;
                 comment.likes = result.likes;
                 this.renderComments()
             }

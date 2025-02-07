@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync"
 
-	_ "github.com/mattn/go-sqlite3" // Import du driver SQLite
+	_ "github.com/mattn/go-sqlite3" 
 )
 
 // Database représente l'instance de la base de données
