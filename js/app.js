@@ -56,7 +56,7 @@ class ShowHomePage {
 class LoginForm {
     constructor() {
         this.render();
-        sessionStorage.setItem('currentPage','login');
+        sessionStorage.setItem('currentPage', 'login');
     }
 
     render() {
@@ -133,7 +133,7 @@ class LoginForm {
 class RegisterForm {
     constructor() {
         this.render();
-        sessionStorage.setItem('currentPage','register');
+        sessionStorage.setItem('currentPage', 'register');
     }
 
     render() {
@@ -220,7 +220,8 @@ class ForumPage {
         this.likePost = this.likePost.bind(this);
         this.dislikePost = this.dislikePost.bind(this);
         this.render();
-        sessionStorage.setItem('currentPage','forum');
+        this.selectedFilter = sessionStorage.getItem('categoryFilter') || '';
+        sessionStorage.setItem('currentPage', 'forum');
         this.fetchPosts();
     }
 
@@ -240,6 +241,7 @@ class ForumPage {
 
 
         this.resetView()
+
         document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
     }
 
@@ -279,6 +281,8 @@ class ForumPage {
             `);
         }
         this.renderCategories()
+
+
         document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
     }
@@ -292,6 +296,13 @@ class ForumPage {
                     "X-Requested-With": postId,
                 },
             });
+
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return; // Sortir de la fonction
+            }
 
             const result = await response.json();
             if (!response.ok) {
@@ -328,6 +339,13 @@ class ForumPage {
                 },
             });
 
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return; // Sortir de la fonction
+            }
+
             const result = await response.json();
             if (!response.ok) {
                 throw new Error(result.message || 'Failed to fetch posts');
@@ -347,10 +365,13 @@ class ForumPage {
             }));
 
 
+            if (this.selectedFilter) {
+                document.getElementById('categoryFilter').value = this.selectedFilter;
+                this.filterPosts();
+            } else {
+                this.displayPosts();
+            }
 
-            console.log("Posts after adding new post:", this.posts);
-
-            this.displayPosts();
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -360,7 +381,7 @@ class ForumPage {
         const categoriesContainer = document.getElementById('categoriesContainer');
         if (!categoriesContainer) {
             console.error('categoriesContainer is not found in the DOM.');
-            return; // Sortir de la fonction si l'élément n'existe pas
+            return; 
         }
         categoriesContainer.innerHTML = '';
 
@@ -430,6 +451,13 @@ class ForumPage {
                 body: JSON.stringify(data),
             });
 
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return; 
+            }
+
             const result = await response.json();
             if (!response.ok) {
                 throw new Error(result.message || 'Logout failed');
@@ -442,7 +470,6 @@ class ForumPage {
             alert("post secced");
             this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
             document.getElementById('categoryFilter').value = '';
-            // Add the new post to the beginning
             console.log("Posts after adding new post:", this.posts);
             this.displayPosts();
             event.target.reset();
@@ -456,7 +483,7 @@ class ForumPage {
 
     filterPosts() {
         const categoryFilter = document.getElementById('categoryFilter').value;
-        console.log(categoryFilter)
+        sessionStorage.setItem('categoryFilter', categoryFilter);
         let filteredPosts;
 
         if (categoryFilter === "myposts") {
@@ -529,13 +556,14 @@ class ForumPage {
         const categoryContainer = document.querySelector('.filter-container');
         const postForm = document.getElementById('postForm');
 
-        // Videz le contenu de ces éléments
         if (categoryContainer) {
             categoryContainer.remove();
         }
+
         if (postForm) {
             postForm.remove();
         }
+
         const post = this.posts.find(p => p.id === postId);
         if (!post) return;
 
@@ -566,28 +594,18 @@ class ForumPage {
 
         `;
 
+        this.renderComments();
 
-
-        this.renderComments(); // Afficher les commentaires existants
-
-        // Événements pour ajouter un commentaire
         document.getElementById(`add-comment-button-${postId}`).addEventListener('click', () => {
             const commentInput = document.getElementById(`comment-input-${postId}`);
-            console.log(commentInput.value);
-
             this.addComment(postId, commentInput.value);
-            commentInput.value = ''; // Réinitialiser le champ de saisie
+            commentInput.value = '';
         });
 
-
-        // Événement pour revenir à la liste des posts
         document.getElementById('back-button').addEventListener('click', () => {
             this.fetchPosts();
             this.displayPosts()
             this.resetView();
-            console.log("jjjjjjj")
-
-
         });
     }
 
@@ -641,20 +659,23 @@ class ForumPage {
                 body: JSON.stringify({ post_id: postId, content: comment, created_at: new Date().toISOString(), }),
             });
 
-            if (!response.ok) {
-                throw new Error('Erreur lors de l\'ajout du commentaire');
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return;
             }
 
             const newComment = await response.json();
 
-            this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
+            if (!response.ok) {
+                throw new Error('Erreur lors de l\'ajout du commentaire');
+            }
 
-            console.log(this.comments);
+            this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
 
             this.renderComments(postId);
         } catch (error) {
-            console.log("HHHHHHHHH");
-
             alert('Erreur: ' + error.message);
         }
     }
@@ -669,28 +690,33 @@ class ForumPage {
                 body: JSON.stringify({ post_id: postId }),
             });
 
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return
+            }
+
+            const result = await response.json();
+
             if (!response.ok) {
                 throw new Error('Failed to like the post');
             }
-
-            // Récupérer le post mis à jour
-            const result = await response.json();
             const post = this.posts.find(p => p.id === postId);
             const comment = this.comments.find(c => c.id === postId)
             if (post) {
 
-                post.likes = result.likes; // Mettre à jour le nombre de likes
-                post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-                post.isLiked = !post.isLiked; // Inverser l'état de like
+                post.likes = result.likes;
+                post.dislikes = result.dislikes;
+                post.isLiked = !post.isLiked;
 
-                // Si l'utilisateur a aimé, réinitialiser l'état de dislike
                 if (post.isLiked) {
                     post.isDisliked = false;
                 }
                 this.displayPosts();
             } else {
                 comment.likes = result.likes;
-                comment.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
+                comment.dislikes = result.dislikes;
 
                 this.renderComments()
             }
@@ -711,20 +737,27 @@ class ForumPage {
                 body: JSON.stringify({ post_id: postId }),
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to dislike the post');
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return;
             }
+
+
 
             // Récupérer le post mis à jour
             const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error('Failed to dislike the post');
+            }
             const post = this.posts.find(p => p.id === postId);
             const comment = this.comments.find(c => c.id === postId)
             if (post) {
-                post.dislikes = result.dislikes; // Mettre à jour le nombre de dislikes
-                post.likes = result.likes; // Mettre à jour le nombre de likes
-                post.isDisliked = !post.isDisliked; // Inverser l'état de dislike
-
-                // Si l'utilisateur a disliké, réinitialiser l'état de like
+                post.dislikes = result.dislikes;
+                post.likes = result.likes;
+                post.isDisliked = !post.isDisliked;
                 if (post.isDisliked) {
                     post.isLiked = false;
                 }
@@ -767,9 +800,9 @@ class ForumPage {
             }
 
             alert("You have been logged out.");
+            sessionStorage.clear();
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
-
             new ShowHomePage();
         } catch (error) {
             alert('Error: ' + error.message);
