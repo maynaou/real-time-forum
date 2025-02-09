@@ -30,10 +30,10 @@ func main() {
 	http.HandleFunc("/api/register", userdata.HandleRegister)
 	http.HandleFunc("/api/login", userdata.HandleLogin)
 	http.HandleFunc("/api/logout", userdata.HandleLogout)
-	http.HandleFunc("/api/post", utils.Middleware(handler.Post))
+	http.HandleFunc("/api/post/", utils.Middleware(handler.Post))
 	http.HandleFunc("/api/like", utils.Middleware(handler.Like))
 	http.HandleFunc("/api/dislike", utils.Middleware(handler.Dislike))
-	http.HandleFunc("/api/comment", utils.Middleware(handler.Comment))
+	http.HandleFunc("/api/comment/", utils.Middleware(handler.Comment))
 	fmt.Println("Server started on http://localhost:" + port)
 	http.ListenAndServe(":"+port, nil)
 }

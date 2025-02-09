@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function navigateToPage(page) {
+    const postId = sessionStorage.getItem('post_id')
+    const posts = JSON.parse(sessionStorage.getItem('posts'));
     switch (page) {
         case 'login':
             new LoginForm();
@@ -25,6 +27,11 @@ function navigateToPage(page) {
         case 'forum':
             new ForumPage();
             break;
+        case 'commentPage':
+            console.log("kkkkkk", postId, posts);
+
+            new CommentPage(postId, posts);
+            break
         default:
             new ShowHomePage();
             break;
@@ -213,6 +220,7 @@ class ForumPage {
             { name: "Startup", color: "rgb(255, 223, 186)" }, // Light Goldenrod Yellow
             { name: "Innovation", color: "rgb(186, 85, 211)" }, // Medium Orchid
         ];
+
         this.posts = [];
         this.comments = []
         this.selectedCategories = [];
@@ -381,7 +389,7 @@ class ForumPage {
         const categoriesContainer = document.getElementById('categoriesContainer');
         if (!categoriesContainer) {
             console.error('categoriesContainer is not found in the DOM.');
-            return; 
+            return;
         }
         categoriesContainer.innerHTML = '';
 
@@ -443,7 +451,7 @@ class ForumPage {
 
 
         try {
-            const response = await fetch('/api/post', {
+            const response = await fetch('/api/post/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -455,7 +463,7 @@ class ForumPage {
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new ShowHomePage()
-                return; 
+                return;
             }
 
             const result = await response.json();
@@ -536,12 +544,11 @@ class ForumPage {
                 </div>
             `;
             postElement.querySelector('.comment-button').addEventListener('click', () => {
-                this.showPostDetails(post.id);
-                this.fetchComment(post.id)
+                new CommentPage(post.id, this.posts);
             });
 
             postElement.querySelector('.like-button').addEventListener('click', () => {
-                this.likePost(post.id);
+                this.likePost(post.id, this.comments);
             });
 
             postElement.querySelector('.dislike-button').addEventListener('click', () => {
@@ -552,133 +559,6 @@ class ForumPage {
         });
     }
 
-    async showPostDetails(postId) {
-        const categoryContainer = document.querySelector('.filter-container');
-        const postForm = document.getElementById('postForm');
-
-        if (categoryContainer) {
-            categoryContainer.remove();
-        }
-
-        if (postForm) {
-            postForm.remove();
-        }
-
-        const post = this.posts.find(p => p.id === postId);
-        if (!post) return;
-
-        const postsContainer = document.getElementById('postsContainer');
-        postsContainer.innerHTML = `
-            <div class="post">
-                <div class="user-info">
-                    <div class="avatar">
-                        <img src="../styles/user.png" alt="User Avatar">
-                    </div>
-                    <h4>${post.username}</h4>
-                    <p>${timeAgo(new Date(post.created_at))}</p>
-                </div>
-                <h3>${post.title}</h3>
-                <p>${post.content}</p>
-                <p>${this.getCategoryElements(post.category)}</p>
-                <p style="font-size: 12px; color: gray;">${formatDate(new Date(post.created_at))}</p>
-            </div>
-                 <div  id="postForm">
-                <input type="text" id="comment-input-${postId}" placeholder="Votre commentaire" />
-                    <div class="reaction-buttons">
-                    <button class="like-button" id="add-comment-button-${postId}">Ajouter un commentaire</button>
-                    <button class="dislike-button" id="back-button">Retour</button>
-                </div>
-                </div>
-            <div id="comments-list">
-            </div>
-
-        `;
-
-        this.renderComments();
-
-        document.getElementById(`add-comment-button-${postId}`).addEventListener('click', () => {
-            const commentInput = document.getElementById(`comment-input-${postId}`);
-            this.addComment(postId, commentInput.value);
-            commentInput.value = '';
-        });
-
-        document.getElementById('back-button').addEventListener('click', () => {
-            this.fetchPosts();
-            this.displayPosts()
-            this.resetView();
-        });
-    }
-
-    renderComments() {
-
-        const commentsList = document.getElementById(`comments-list`);
-        commentsList.innerHTML = ''
-
-        this.comments.forEach((comment) => {
-            const commentElement = document.createElement('div');
-            commentElement.className = 'post';
-            const formattedDate = formatDate(new Date(comment.created_at));
-            const TimeAgo = timeAgo(new Date(comment.created_at));
-            const likeCount = comment.likes || 0;
-            const dislikeCount = comment.dislikes || 0;
-            commentElement.innerHTML = `
-                <div class="user-info">
-                <div class="avatar">
-                    <img src="../styles/user.png" alt="User Avatar" style="width: 30px; height: 30px;">
-                </div>
-                    <h4>${comment.username}</h4> <!-- Utiliser le nom d'utilisateur du post si non spécifié -->
-                    <p>${TimeAgo}</p>
-                </div>
-                <p>${comment.content}</p>
-                <p style="font-size: 12px; color: gray;">${formattedDate}</p>
-                 <div class="reaction-buttons">
-                    <button class="like-button" >👍 ${likeCount}</button>
-                    <button class="dislike-button">👎 ${dislikeCount}</button>
-                </div>
-            `
-            commentElement.querySelector('.like-button').addEventListener('click', () => {
-                this.likePost(comment.id);
-            });
-
-            commentElement.querySelector('.dislike-button').addEventListener('click', () => {
-                this.dislikePost(comment.id);
-            });
-
-            commentsList.appendChild(commentElement)
-        })
-    }
-
-    async addComment(postId, comment) {
-        if (!comment) return;
-        try {
-            const response = await fetch(`/api/comment`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ post_id: postId, content: comment, created_at: new Date().toISOString(), }),
-            });
-
-            if (response.status === 401) {
-                const forumContainer = document.getElementById('formContainer');
-                forumContainer.innerHTML = '';
-                new ShowHomePage()
-                return;
-            }
-
-            const newComment = await response.json();
-
-            if (!response.ok) {
-                throw new Error('Erreur lors de l\'ajout du commentaire');
-            }
-
-            this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
-
-            this.renderComments(postId);
-        } catch (error) {
-            alert('Erreur: ' + error.message);
-        }
-    }
     async likePost(postId) {
 
         try {
@@ -703,9 +583,7 @@ class ForumPage {
                 throw new Error('Failed to like the post');
             }
             const post = this.posts.find(p => p.id === postId);
-            const comment = this.comments.find(c => c.id === postId)
             if (post) {
-
                 post.likes = result.likes;
                 post.dislikes = result.dislikes;
                 post.isLiked = !post.isLiked;
@@ -714,11 +592,6 @@ class ForumPage {
                     post.isDisliked = false;
                 }
                 this.displayPosts();
-            } else {
-                comment.likes = result.likes;
-                comment.dislikes = result.dislikes;
-
-                this.renderComments()
             }
 
         } catch (error) {
@@ -744,8 +617,6 @@ class ForumPage {
                 return;
             }
 
-
-
             // Récupérer le post mis à jour
             const result = await response.json();
 
@@ -753,7 +624,6 @@ class ForumPage {
                 throw new Error('Failed to dislike the post');
             }
             const post = this.posts.find(p => p.id === postId);
-            const comment = this.comments.find(c => c.id === postId)
             if (post) {
                 post.dislikes = result.dislikes;
                 post.likes = result.likes;
@@ -762,12 +632,7 @@ class ForumPage {
                     post.isLiked = false;
                 }
                 this.displayPosts();
-            } else {
-                comment.dislikes = result.dislikes;
-                comment.likes = result.likes;
-                this.renderComments()
             }
-
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -809,6 +674,269 @@ class ForumPage {
         }
     }
 }
+
+class CommentPage {
+    constructor(postId, posts) {
+        this.category = [
+            { name: "Tech", color: "rgb(34, 193, 195)" }, // Teal
+            { name: "Finance", color: "rgb(255, 99, 71)" }, // Tomato
+            { name: "Health", color: "rgb(70, 130, 180)" }, // Steel Blue
+            { name: "Startup", color: "rgb(255, 223, 186)" }, // Light Goldenrod Yellow
+            { name: "Innovation", color: "rgb(186, 85, 211)" }, // Medium Orchid
+        ];
+        this.postId = postId;
+        this.posts = posts;
+        this.comments = [];
+        this.render();
+        sessionStorage.setItem('currentPage', 'commentPage');
+        sessionStorage.setItem('post_id', postId)
+        sessionStorage.setItem('posts', JSON.stringify(posts));
+        this.fetchComments()
+    }
+
+    render() {
+        const categoryContainer = document.querySelector('.filter-container');
+        const postForm = document.getElementById('postForm');
+
+        if (categoryContainer) {
+            categoryContainer.remove();
+        }
+
+        if (postForm) {
+            postForm.remove();
+        }
+
+        const post = this.posts.find(p => p.id === this.postId);
+        if (!post) return;
+
+        let postsContainer = document.getElementById('postsContainer')
+        if (!postsContainer) {
+            const forumContainer = document.getElementById('formContainer');
+            forumContainer.innerHTML = `
+           <div class="user">
+               <h1>Real-Time-Forum</h1>
+               <span id="logged-in-label">${sessionStorage.getItem('username')}<span>
+               <button id="logoutButton">❌</button>
+           </div>
+       `;
+            postsContainer = document.createElement('div')
+            postsContainer.id = 'postContainer'
+            forumContainer.appendChild(postsContainer)
+        }
+        postsContainer.innerHTML = `
+            <div class="post">
+                <div class="user-info">
+                    <div class="avatar">
+                        <img src="../styles/user.png" alt="User Avatar">
+                    </div>
+                    <h4>${post.username}</h4>
+                    <p>${timeAgo(new Date(post.created_at))}</p>
+                </div>
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <p>${this.getCategoryElements(post.category)}</p>
+                <p style="font-size: 12px; color: gray;">${formatDate(new Date(post.created_at))}</p>
+            </div>
+                 <div  id="postForm">
+                <input type="text" id="comment-input-${this.postId}" placeholder="Votre commentaire" />
+                    <div class="reaction-buttons">
+                    <button class="like-button" id="add-comment-button-${this.postId}">Ajouter un commentaire</button>
+                    <button class="dislike-button" id="back-button">Retour</button>
+                </div>
+                </div>
+            <div id="comments-list">
+            </div>`;
+
+        document.getElementById(`add-comment-button-${this.postId}`).addEventListener('click', () => {
+            const commentInput = document.getElementById(`comment-input-${this.postId}`);
+            this.addComment(commentInput.value);
+            commentInput.value = '';
+        });
+
+        document.getElementById('back-button').addEventListener('click', () => {
+            new ForumPage()
+        });
+    }
+
+    renderComments() {
+        const commentsList = document.getElementById("comments-list");
+        commentsList.innerHTML = ''
+
+        this.comments.forEach((comment) => {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'post';
+            const formattedDate = formatDate(new Date(comment.created_at));
+            const TimeAgo = timeAgo(new Date(comment.created_at));
+            const likeCount = comment.likes || 0;
+            const dislikeCount = comment.dislikes || 0;
+            commentElement.innerHTML = `
+                <div class="user-info">
+                <div class="avatar">
+                    <img src="../styles/user.png" alt="User Avatar" style="width: 30px; height: 30px;">
+                </div>
+                    <h4>${comment.username}</h4> <!-- Utiliser le nom d'utilisateur du post si non spécifié -->
+                    <p>${TimeAgo}</p>
+                </div>
+                <p>${comment.content}</p>
+                <p style="font-size: 12px; color: gray;">${formattedDate}</p>
+                 <div class="reaction-buttons">
+                    <button class="like-button" >👍 ${likeCount}</button>
+                    <button class="dislike-button">👎 ${dislikeCount}</button>
+                </div>
+            `
+            commentElement.querySelector('.like-button').addEventListener('click', () => {
+                this.likeComment(comment.id);
+            });
+
+            commentElement.querySelector('.dislike-button').addEventListener('click', () => {
+                this.dislikeComment(comment.id);
+            });
+
+            commentsList.appendChild(commentElement)
+        })
+    }
+
+    getCategoryElements(categoriesArray) {
+        return categoriesArray.map(categoryName => {
+            const category = this.category.find(cat => cat.name === categoryName);
+            const color = category ? category.color : 'gray';
+            return `
+                <span class="category-label"   style="background-color: ${color}; font-size: 12px; ">
+                    ${categoryName}
+                </span>
+            `;
+        }).join('');
+    }
+
+    async fetchComments() {
+        try {
+            const response = await fetch('/api/comment', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-Requested-With": this.postId,
+                }, });
+
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage();
+                return;
+            }
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to fetch comments');
+            }
+
+            this.comments = result.map(comment => ({
+                username: comment.username,
+                content: comment.content,
+                created_at: comment.created_at,
+                id: comment.id,
+                likes: comment.likes || 0,
+                dislikes: comment.dislikes || 0,
+            }));
+
+
+            this.renderComments();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+
+    async addComment(comment) {
+        if (!comment) return;
+        try {
+            const response = await fetch('/api/comment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+
+                body: JSON.stringify({ post_id: this.postId, content: comment, created_at: new Date().toISOString(), }),
+            });
+
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage();
+                return;
+            }
+            const newComment = await response.json();
+            if (!response.ok) {
+                throw new Error('Erreur lors de l\'ajout du commentaire');
+            }
+              
+            this.comments.unshift({...newComment, isLiked: false, isDisliked: false });
+           
+            
+            this.renderComments();
+        } catch (error) {
+            
+            alert('Erreur: ' + error.message);
+        }
+    }
+
+    async likeComment(commentId) {
+        try {
+            const response = await fetch('/api/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ post_id: commentId }),
+            });
+
+            if (response.status === 401) {
+                new ShowHomePage();
+                return;
+            }
+
+
+
+            // Récupérer le post mis à jour
+            const result = await response.json();
+            if (!response.ok) throw new Error('Failed to like the comment');
+
+            const comment = this.comments.find(c => c.id === commentId);
+            if (comment) {
+                comment.likes = result.likes;
+                comment.dislikes = result.dislikes;
+                this.renderComments();
+            }
+
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async dislikeComment(commentId) {
+        try {
+            const response = await fetch('/api/dislike', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ post_id: commentId }),
+            });
+            if (response.status === 401) {
+                new ShowHomePage();
+                return;
+            }
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result || 'Logout failed');
+            }
+
+            const comment = this.comments.find(c => c.id === commentId);
+            if (comment) {
+                comment.dislikes = result.dislikes;
+                comment.likes = result.likes;
+                this.renderComments();
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+}
+
 
 function formatDate(date) {
     const options = {
