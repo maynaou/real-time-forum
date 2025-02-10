@@ -111,3 +111,4 @@ func ValidateCommentInput(comment models.Comment) map[string]string {
 
 	return errors
 }
+

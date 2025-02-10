@@ -98,7 +98,7 @@ func DeleteSession(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "DELETE FROM sessions WHERE id = ?"
+	query := "DELETE FROM sessions WHERE id = ? "
 	stmt, err := database.DB.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Printf("Failed to prepare delete session statement for ID: %s. Error: %v", id, err)

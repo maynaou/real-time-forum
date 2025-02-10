@@ -51,7 +51,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Error setting session: %v", err)
 			return
 		}
-		
+
 		response := LoginResponse{
 			Message:  "Login successful",
 			Username: user.Nickname,

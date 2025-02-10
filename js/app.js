@@ -28,7 +28,7 @@ function navigateToPage(page) {
             new ForumPage();
             break;
         case 'commentPage':
-            console.log("kkkkkk", postId, posts);
+
 
             new CommentPage(postId, posts);
             break
@@ -43,9 +43,25 @@ class ShowHomePage {
         this.element = document.createElement('div');
         this.element.className = 'home';
         document.getElementById('formContainer').appendChild(this.element);
-        this.showHomePage();
+        this.checkAuth();
     }
-
+    async checkAuth() {
+        try {
+            const response = await fetch('/api/login', { method: 'GET' });
+            if (response.ok) {
+                const result = await response.json();
+                console.log(result);
+                
+                if (result.authenticated === "true") {
+                    new ForumPage(); // Redirect to forum if authenticated
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Error checking authentication:', error);
+        }
+        this.showHomePage(); // Show home page if not authenticated or error occurs
+    }
     showHomePage() {
         this.element.innerHTML = `
             <h1>WELCOME TO REAL-TIME-FORUM</h1>
@@ -63,6 +79,7 @@ class ShowHomePage {
 class LoginForm {
     constructor() {
         this.render();
+
         sessionStorage.setItem('currentPage', 'login');
     }
 
@@ -94,6 +111,8 @@ class LoginForm {
     }
 
 
+
+
     async handleSubmit(event) {
         event.preventDefault();
         const formData = new FormData(event.target);
@@ -122,11 +141,17 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return; // Sortir de la fonction
+            }
+
             const result = await response.json()
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
-
 
             alert('Login successful!');
             sessionStorage.setItem('username', result.username);
@@ -193,6 +218,13 @@ class RegisterForm {
                 },
                 body: JSON.stringify(data),
             });
+
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new ShowHomePage()
+                return; // Sortir de la fonction
+            }
 
             const result = await response.json();
             console.log(result.message)
@@ -294,48 +326,6 @@ class ForumPage {
         document.getElementById('categoryFilter').addEventListener('change', this.filterPosts.bind(this));
         document.getElementById('postForm').addEventListener('submit', this.handlePostSubmit.bind(this));
     }
-
-    async fetchComment(postId) {
-        try {
-            const response = await fetch('/api/comment', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    "X-Requested-With": postId,
-                },
-            });
-
-            if (response.status === 401) {
-                const forumContainer = document.getElementById('formContainer');
-                forumContainer.innerHTML = '';
-                new ShowHomePage()
-                return; // Sortir de la fonction
-            }
-
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || 'Failed to fetch posts');
-            }
-
-            this.comments = result.map(comment => ({
-                username: comment.username,
-                content: comment.content,
-                created_at: comment.created_at,
-                id: comment.id,
-                likes: comment.likes || 0,
-                dislikes: comment.dislikes || 0,
-            }));
-
-
-
-            console.log("comment after adding new post:", this.comments);
-
-            this.renderComments();
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    }
-
 
     async fetchPosts() {
         try {
@@ -887,6 +877,8 @@ class CommentPage {
             });
 
             if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
                 new ShowHomePage();
                 return;
             }
@@ -917,6 +909,8 @@ class CommentPage {
                 body: JSON.stringify({ post_id: commentId }),
             });
             if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
                 new ShowHomePage();
                 return;
             }

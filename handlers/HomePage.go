@@ -1,8 +1,11 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func HomePage(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodGet {
 		ShowErrorPage(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -14,4 +17,5 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, "templates/index.html")
+
 }

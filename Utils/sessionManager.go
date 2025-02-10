@@ -111,7 +111,6 @@ func GetUserFromSession(r *http.Request) (models.RegisterRequest, bool) {
 		return models.RegisterRequest{}, false
 	}
 
-
 	database := database.GetDatabaseInstance()
 	if database == nil || database.DB == nil {
 		fmt.Printf("Database connection error")

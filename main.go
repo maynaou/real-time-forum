@@ -11,7 +11,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8075"
+var port = "8090"
 
 func main() {
 
@@ -27,8 +27,8 @@ func main() {
 	http.HandleFunc("/js/", handler.StaticHandler)
 	http.HandleFunc("/styles/", handler.StaticHandler)
 	http.HandleFunc("/", handler.HomePage)
-	http.HandleFunc("/api/register", userdata.HandleRegister)
-	http.HandleFunc("/api/login", userdata.HandleLogin)
+	http.HandleFunc("/api/register", utils.Auth(userdata.HandleRegister))
+	http.HandleFunc("/api/login", utils.Auth(userdata.HandleLogin))
 	http.HandleFunc("/api/logout", userdata.HandleLogout)
 	http.HandleFunc("/api/post/", utils.Middleware(handler.Post))
 	http.HandleFunc("/api/like", utils.Middleware(handler.Like))
