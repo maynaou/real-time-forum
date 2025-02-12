@@ -154,7 +154,6 @@ class LoginForm {
             }
 
             alert('Login successful!');
-            sessionStorage.setItem('username', result.username);
             new ForumPage();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -259,10 +258,12 @@ class ForumPage {
         this.maxCategories = 3;
         this.likePost = this.likePost.bind(this);
         this.dislikePost = this.dislikePost.bind(this);
-        this.render();
+        this.fetchUser();
+      
         this.selectedFilter = sessionStorage.getItem('categoryFilter') || '';
         sessionStorage.setItem('currentPage', 'forum');
         this.fetchPosts();
+        this.fetchUsers();
     }
 
     render() {
@@ -273,6 +274,12 @@ class ForumPage {
                 <h1>Real-Time-Forum</h1>
                 <span id="logged-in-label">${this.getUsername()}<span>
                 <button id="logoutButton">❌</button>
+            </div>
+
+            <div id="userListContainer">
+            <h2>Users</h2>
+            <div class="user-list" id="userList">
+            </div>
             </div>
             
             <div id="postsContainer">
@@ -288,6 +295,62 @@ class ForumPage {
     getUsername() {
         // Retrieve the logged-in username from session or context
         return sessionStorage.getItem('username') || "Guest" // Example placeholder
+    }
+
+    async fetchUser() {
+        try {
+            const response = await fetch('/api/user',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+
+                },
+            }); // Assurez-vous que cet endpoint existe
+            if (!response.ok) throw new Error('Failed to fetch users');
+    
+            const user = await response.json();
+            sessionStorage.setItem('username', user.nickname);
+            this.render();
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    }
+
+    async fetchUsers() {
+        try {
+            const response = await fetch('/api/users',{
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+
+                },
+            }); // Assurez-vous que cet endpoint existe
+            if (!response.ok) throw new Error('Failed to fetch users');
+    
+            const users = await response.json();
+            
+            this.displayUsers(users);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    }
+
+    displayUsers(users) {
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+    
+        users.forEach(user => {
+            const userItem = document.createElement('div');
+            userItem.className = 'user-item';
+            userItem.setAttribute('data-user-id', user.id);
+            userItem.innerText = user.nickname; // Assurez-vous que le champ username existe
+    
+            userItem.addEventListener('click', function () {
+              new Message(user.nickname)
+            });
+    
+            userList.appendChild(userItem);
+        });
     }
 
 
@@ -929,6 +992,40 @@ class CommentPage {
             alert('Error: ' + error.message);
         }
     }
+}
+
+class Message {
+       constructor(username) {
+        this.username = username;
+        this.render();
+       }
+
+       render() {
+        const forumContainer = document.getElementById('formContainer');
+        forumContainer.innerHTML = ''
+        forumContainer.innerHTML = `
+        <div id="chatContainer">
+        <!-- Conteneur pour les messages -->
+        <div id="messageFormContainer">
+                         <div class="user-info">
+                   <div class="avatar">
+           <img src="../styles/user.png" alt="User Avatar">
+        </div>
+      <h4>${this.username}</h4>
+   
+</div>
+            <div id="messagesContainer"></div>
+            <form id="messageForm">
+                <textarea id="messageContent" placeholder="Type your message here..." required></textarea>
+                 <div class="reaction-buttons">
+                    <button class="dislike-button" id="back-button">Back</button>
+                    <button class="like-button" id="send">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+        `;
+       }
 }
 
 

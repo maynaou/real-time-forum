@@ -388,6 +388,116 @@ input:focus {
     border-color: #4e34b6; /* Change la couleur de la bordure au focus */
 } 
 
+#userListContainer {
+    position: fixed; /* Fixe le conteneur à droite */
+    top: 127px; /* Espace pour la barre d'utilisateur fixe */
+    right: 100px; /* Positionner complètement à droite */
+    width: 400px; /* Largeur du conteneur */
+    background-color: #1a1a1a; /* Couleur de fond */
+    border: 1px solid #4e34b6; /* Bordure gauche */
+    border-radius: 5px;
+    padding: 15px; /* Espacement interne */
+    height: auto; /* Hauteur pour remplir l'écran, moins la hauteur de la barre d'utilisateur */
+    overflow-y: auto; /* Ajoute un défilement si le contenu dépasse */
+    z-index: 1000; /* Assurez-vous que le conteneur est au-dessus des autres éléments */
+}
+
+.user-list {
+    display: flex;
+    flex-direction: column; /* Alignement vertical */
+}
+
+.user-item {
+    border: 1px solid #4e34b6; /* Bordure pour chaque utilisateur */
+    border-radius: 5px; /* Coins arrondis */
+    padding: 10px; /* Espacement interne */
+    margin: 5px 0; /* Espacement entre les utilisateurs */
+    color: #ffffff; /* Couleur du texte */
+    cursor: pointer; /* Curseur de main au survol */
+    transition: background-color 0.3s; /* Transition pour l'effet au survol */
+}
+
+.user-item:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Effet au survol */
+}
+
+#userListContainer h2 {
+    color: #ffffff; /* Couleur du titre */
+    text-align: center; /* Centrer le titre */
+}
+
+#chatContainer {
+    position: relative;
+    border: 1px solid #4e34b6;
+    max-width: 700px; /* Largeur maximale du conteneur */
+    height: 815px;
+    margin: 0 auto; /* Centrer le conteneur */
+    padding: 20px; /* Espacement interne */
+    background-color: #000000; /* Couleur de fond du conteneur */
+    border-radius: 10px; /* Coins arrondis */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre légère */
+}
+
+#messageFormContainer {
+    display: flex; /* Utiliser flexbox pour aligner les éléments */
+    flex-direction: column; /* Alignement vertical */
+}
+
+#messageFormContainer h2 {
+    color: #ffffff; /* Couleur du titre */
+    text-align: center; /* Centrer le titre */
+    margin-bottom: 15px; /* Espacement en bas */
+}
+
+#messagesContainer {
+    height: 600px;
+     /* Hauteur maximale pour le conteneur des messages */
+    overflow-y: auto; /* Permet le défilement */
+    margin-bottom: 15px; /* Espacement en bas */
+    margin-top: 10px;
+    padding: 10px; /* Espacement interne */
+    border: 1px solid #4e34b6; /* Bordure grise */
+    border-radius: 5px; /* Coins arrondis pour le conteneur de messages */
+    background-color: #000000; /* Couleur de fond des messages */
+}
+
+.message {
+    background-color: #000000; /* Couleur de fond pour les messages reçus */
+    border-radius: 8px; /* Coins arrondis */
+    padding: 10px; /* Espacement interne */
+    margin: 5px 0; /* Espacement entre les messages */
+    max-width: 80%; /* Largeur maximale des messages */
+    align-self: flex-start; /* Aligner à gauche pour les messages reçus */
+}
+
+.message.sender {
+    background-color: #4e34b6; /* Couleur de fond pour les messages envoyés */
+    color: white; /* Couleur du texte pour les messages envoyés */
+    align-self: flex-end; /* Aligner à droite pour les messages envoyés */
+}
+
+#messageForm {
+    display: flex; /* Utiliser flexbox pour la disposition */
+    flex-direction: column; /* Alignement vertical */
+}
+
+#messageForm input,
+#messageForm textarea {
+    border: 1px solid #4e34b6; /* Bordure grise */
+    border-radius: 5px; /* Coins arrondis */
+    padding: 10px; /* Espacement interne */
+    margin-bottom: 15px; /* Espace en bas */
+    background: #000000; /* Fond blanc pour les champs */
+    color: #ffffff; /* Couleur du texte */
+    transition: border-color 0.3s; /* Transition douce pour la couleur de la bordure */
+}
+
+#messageForm input:focus,
+#messageForm textarea:focus {
+    border-color: #4e34b6; /* Change la couleur de la bordure au focus */
+    outline: none; /* Enlève le contour par défaut */
+}
+
 @media (max-width: 736px) {
     .main {
         flex-direction: column; 
