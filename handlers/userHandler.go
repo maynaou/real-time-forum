@@ -63,8 +63,6 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(users)
-
 	data, err := json.Marshal(users)
 	if err != nil {
 		fmt.Printf("Failed to marshal users data: %v", err)

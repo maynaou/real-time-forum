@@ -22,7 +22,6 @@ func Comment(w http.ResponseWriter, r *http.Request) {
 }
 
 func createComment(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("hhhhhh")
 	var comment models.Comment
 	comment.ID = uuid.New().String()
 
@@ -39,8 +38,6 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println("hhh", comment)
 
 	validationErrors := utils.ValidateCommentInput(comment)
 	if len(validationErrors) > 0 {

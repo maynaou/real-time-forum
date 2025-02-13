@@ -11,7 +11,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8088"
+var port = "8094"
 
 func main() {
 
@@ -30,12 +30,13 @@ func main() {
 	http.HandleFunc("/api/register", utils.Auth(userdata.HandleRegister))
 	http.HandleFunc("/api/login", utils.Auth(userdata.HandleLogin))
 	http.HandleFunc("/api/logout", userdata.HandleLogout)
-	http.HandleFunc("/api/user",handler.User)
-	http.HandleFunc("/api/users",handler.Users)
+	http.HandleFunc("/api/user", handler.User)
+	http.HandleFunc("/api/users", handler.GetActiveUsers)
 	http.HandleFunc("/api/post/", utils.Middleware(handler.Post))
 	http.HandleFunc("/api/like", utils.Middleware(handler.Like))
 	http.HandleFunc("/api/dislike", utils.Middleware(handler.Dislike))
 	http.HandleFunc("/api/comment/", utils.Middleware(handler.Comment))
+	http.HandleFunc("/ws",handler.WebSocket)
 	fmt.Println("Server started on http://localhost:" + port)
 	http.ListenAndServe(":"+port, nil)
 }

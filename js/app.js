@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const currentPage = sessionStorage.getItem('currentPage' || 'home')
-
+    console.log(currentPage);
+    
     navigateToPage(currentPage)
 
     document.body.addEventListener('click', function (event) {
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function navigateToPage(page) {
     const postId = sessionStorage.getItem('post_id')
     const posts = JSON.parse(sessionStorage.getItem('posts'));
+    const user = sessionStorage.getItem('user')
     switch (page) {
         case 'login':
             new LoginForm();
@@ -28,10 +30,11 @@ function navigateToPage(page) {
             new ForumPage();
             break;
         case 'commentPage':
-
-
             new CommentPage(postId, posts);
             break
+        case 'messagePage':
+            new Message(user);
+             break
         default:
             new ShowHomePage();
             break;
@@ -328,8 +331,10 @@ class ForumPage {
             if (!response.ok) throw new Error('Failed to fetch users');
     
             const users = await response.json();
-            
-            this.displayUsers(users);
+            console.log(users);
+            if (users) {
+                this.displayUsers(users);
+            }
         } catch (error) {
             console.error('Error fetching users:', error);
         }
@@ -342,11 +347,11 @@ class ForumPage {
         users.forEach(user => {
             const userItem = document.createElement('div');
             userItem.className = 'user-item';
-            userItem.setAttribute('data-user-id', user.id);
-            userItem.innerText = user.nickname; // Assurez-vous que le champ username existe
-    
+            userItem.innerText = user; // Assurez-vous que le champ username existe
+            sessionStorage.setItem('user',user)
             userItem.addEventListener('click', function () {
-              new Message(user.nickname)
+
+              new Message(user)
             });
     
             userList.appendChild(userItem);
@@ -995,38 +1000,109 @@ class CommentPage {
 }
 
 class Message {
-       constructor(username) {
+    constructor(username) {
         this.username = username;
         this.render();
-       }
+        sessionStorage.setItem('currentPage', 'messagePage');
+        this.ws = this.connectWebSocket();
+    }
 
-       render() {
+    render() {
         const forumContainer = document.getElementById('formContainer');
-        forumContainer.innerHTML = ''
+        forumContainer.innerHTML = ''; // Vide le conteneur
         forumContainer.innerHTML = `
-        <div id="chatContainer">
-        <!-- Conteneur pour les messages -->
-        <div id="messageFormContainer">
-                         <div class="user-info">
-                   <div class="avatar">
-           <img src="../styles/user.png" alt="User Avatar">
-        </div>
-      <h4>${this.username}</h4>
-   
-</div>
-            <div id="messagesContainer"></div>
-            <form id="messageForm">
-                <textarea id="messageContent" placeholder="Type your message here..." required></textarea>
-                 <div class="reaction-buttons">
-                    <button class="dislike-button" id="back-button">Back</button>
-                    <button class="like-button" id="send">Send</button>
+            <div id="chatContainer">
+                <div id="messageFormContainer">
+                    <div class="user-info">
+                        <div class="avatar">
+                            <img src="../styles/user.png" alt="User Avatar">
+                        </div>
+                        <h4>${this.username}</h4>
+                    </div>
+                    <div id="messagesContainer"></div>
+                    <form id="messageForm">
+                        <textarea id="messageContent" placeholder="Type your message here..." required></textarea>
+                        <div class="reaction-buttons">
+                            <button type="button" class="dislike-button" id="back-button">Back</button>
+                            <button type="submit" class="like-button" id="send">Send</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
         `;
-       }
+
+        document.getElementById('messageForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Empêche le rechargement de la page
+            const commentInput = document.getElementById('messageContent');
+            const messageText = commentInput.value.trim(); // Supprime les espaces
+
+            if (messageText) {
+                this.addComment(messageText);
+                commentInput.value = '';
+            } else {
+                alert("Message cannot be empty."); // Alerte si le message est vide
+            }
+        });
+
+        document.getElementById('back-button').addEventListener('click', () => {
+            new ForumPage();
+        });
+    }
+
+    connectWebSocket() {
+
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.displayReceivedMessage(data.message, data.time);
+            console.log(`Received message: ${data.sender}: ${data.message}`);
+        };
+
+        ws.onerror = (error) => {
+            console.error(`WebSocket error: ${error}`);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket connection closed.");
+        };
+
+        return ws;
+    }
+
+    addComment(message) {
+        // Envoie le message au serveur WebSocket
+        if (this.ws.readyState === WebSocket.OPEN) {
+            const messageData = {
+                receiver: this.username,
+                message: message,
+                time: new Date().toLocaleTimeString()
+            };
+
+            console.log(messageData);
+            
+            this.ws.send(JSON.stringify(messageData));
+            this.displaySentMessage(messageData);
+        }
+    }
+
+    displaySentMessage(messageData) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageItem = document.createElement('div');
+        messageItem.classList.add('message', 'sender');
+        messageItem.textContent = ` ${messageData.message} ${messageData.time}`;
+        messagesContainer.appendChild(messageItem);
+    }
+
+    displayReceivedMessage( message, time) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageItem = document.createElement('div');
+        messageItem.classList.add('message', 'receiver');
+        messageItem.textContent = `${message} ${time}`;
+        messagesContainer.appendChild(messageItem);
+    }
 }
+
+const ws = new WebSocket("ws://localhost:8094/ws");
 
 
 function formatDate(date) {

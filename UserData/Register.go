@@ -28,8 +28,6 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(req)
-
 	validationErrors := utils.ValidateRegisterFornData(req)
 	if len(validationErrors) > 0 {
 		handler.ShowErrorPage(w, "Missing required fields", http.StatusBadRequest)

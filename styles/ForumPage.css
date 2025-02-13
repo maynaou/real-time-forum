@@ -451,6 +451,8 @@ input:focus {
 
 #messagesContainer {
     height: 600px;
+    display: flex;
+    flex-direction: column;
      /* Hauteur maximale pour le conteneur des messages */
     overflow-y: auto; /* Permet le défilement */
     margin-bottom: 15px; /* Espacement en bas */
@@ -473,7 +475,20 @@ input:focus {
 .message.sender {
     background-color: #4e34b6; /* Couleur de fond pour les messages envoyés */
     color: white; /* Couleur du texte pour les messages envoyés */
-    align-self: flex-end; /* Aligner à droite pour les messages envoyés */
+    align-self: flex-end; /* Aligner à gauche pour les messages envoyés */
+    border-radius: 10px; /* Coins arrondis */
+    padding: 10px; /* Espacement interne */
+    margin: 5px 0; /* Espacement entre les messages */
+}
+
+/* Styles pour les messages reçus */
+.message.receiver {
+    background-color: #3419a0; /* Couleur de fond pour les messages reçus */
+    color: rgb(255, 255, 255); /* Couleur du texte pour les messages reçus */
+    align-self: flex-start; /* Aligner à droite pour les messages reçus */
+    border-radius: 10px; /* Coins arrondis */
+    padding: 10px; /* Espacement interne */
+    margin: 5px 0; /* Espacement entre les messages */
 }
 
 #messageForm {
