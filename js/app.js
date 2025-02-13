@@ -350,7 +350,6 @@ class ForumPage {
             userItem.innerText = user; // Assurez-vous que le champ username existe
             sessionStorage.setItem('user',user)
             userItem.addEventListener('click', function () {
-
               new Message(user)
             });
     

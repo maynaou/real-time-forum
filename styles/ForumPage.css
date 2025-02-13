@@ -415,10 +415,24 @@ input:focus {
     color: #ffffff; /* Couleur du texte */
     cursor: pointer; /* Curseur de main au survol */
     transition: background-color 0.3s; /* Transition pour l'effet au survol */
+    position: relative
 }
 
 .user-item:hover {
     background-color: rgba(255, 255, 255, 0.1); /* Effet au survol */
+}
+
+.user-item::after {
+    content: ''; /* Nécessaire pour afficher le pseudo-élément */
+    position: absolute; /* Positionner par rapport à l'élément parent */
+    right: 10px; /* Position à droite de l'élément */
+    top: 50%; /* Centrer verticalement */
+    transform: translateY(-50%); /* Ajuster pour centrer parfaitement */
+    width: 10px; /* Largeur du cercle */
+    height: 10px; /* Hauteur du cercle */
+    border-radius: 50%; /* Arrondir pour former un cercle */
+    background-color: rgb(24, 185, 92); /* Couleur du cercle */
+    border: 2px solid white; /* Bordure blanche pour le cercle */
 }
 
 #userListContainer h2 {
