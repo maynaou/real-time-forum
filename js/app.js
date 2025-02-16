@@ -1011,6 +1011,7 @@ class Message {
         this.username = username;
         this.render();
         this.older = false;
+        this.b = false;
         sessionStorage.setItem('currentPage', 'messagePage');
         this.getMessage()
         this.ws = this.connectWebSocket();
@@ -1138,6 +1139,7 @@ class Message {
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            this.b = true
             this.displayReceivedMessage(data.content, data.created_at);
             console.log(`Received message: ${data.sender}: ${data.content}`);
         };
@@ -1162,6 +1164,7 @@ class Message {
                 created_at: new Date().toISOString(),
             };
             this.ws.send(JSON.stringify(messageData));
+            this.b = true;
             this.displaySentMessage(messageData);
         }
     }
@@ -1170,19 +1173,45 @@ class Message {
         const messagesContainer = document.getElementById('messagesContainer');
         const messageItem = document.createElement('div');
         messageItem.classList.add('message', 'sender');
-        messageItem.textContent = `${messageData.content} ${messageData.created_at}`;
+        const createdAt = new Date(messageData.created_at);
+        const options = {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // Utiliser le format 24 heures
+        };
+    
+        // Formater le temps
+        const formattedTime = createdAt.toLocaleTimeString([], options);
+        messageItem.textContent = `${messageData.content} ${formattedTime}`;
+        if (this.b) {
+            messagesContainer.appendChild(messageItem);
+            this.b = false;
+        }else {
             messagesContainer.prepend(messageItem);
+        }
+        
     }
 
     displayReceivedMessage(message, time) {
         const messagesContainer = document.getElementById('messagesContainer');
         const messageItem = document.createElement('div');
         messageItem.classList.add('message', 'receiver');
-        messageItem.textContent = `${message} ${time}`;
+        const createdAt = new Date(time);
+        const options = {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false // Utiliser le format 24 heures
+        };
+    
+        // Formater le temps
+        const formattedTime = createdAt.toLocaleTimeString([], options);
+        messageItem.textContent = `${message} ${formattedTime}`;
+        if (this.b) {
+            messagesContainer.appendChild(messageItem);
+            this.b = false;
+        }else {
             messagesContainer.prepend(messageItem);
-
-
-
+        }
     }
 }
 
