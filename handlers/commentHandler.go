@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	models "handler/DataBase/Models"
 	utils "handler/Utils"
-	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -56,8 +57,6 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("comment", comment)
-
 	response := map[string]interface{}{
 		"id":         comment.ID,
 		"username":   user.Nickname, // Assurez-vous de renvoyer le bon username
@@ -65,8 +64,8 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		"user_id":    user.ID,
 		"content":    comment.Content,
 		"created_at": comment.CreatedAt,
-		"likes":      0, 
-		"dislikes":   0, 
+		"likes":      0,
+		"dislikes":   0,
 	}
 
 	data, err := json.Marshal(response)

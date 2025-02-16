@@ -44,8 +44,6 @@ func createLike(w http.ResponseWriter, r *http.Request) {
 	likeCount, _ := models.CountLikes(like.Post_ID)
 	dislikeCount, _ := models.CountDislikes(like.Post_ID)
 
-	fmt.Println("like", likeCount, "dislike", dislikeCount)
-
 	response := map[string]int{
 		"likes":    likeCount,
 		"dislikes": dislikeCount,

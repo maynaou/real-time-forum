@@ -3,14 +3,20 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	database "handler/DataBase/Sqlite"
 	"log"
 	"net/http"
-	"time"
+
+	database "handler/DataBase/Sqlite"
 )
 
 func Middleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		database := database.GetDatabaseInstance()
+		if database == nil || database.DB == nil {
+			fmt.Printf("Database connection error")
+			log.Fatal("Database connection error")
+			return
+		}
 		session, err := r.Cookie("session_id")
 		if err != nil || session.Value == "" {
 			log.Println("Unauthorized. Redirecting to login.")
@@ -18,6 +24,15 @@ func Middleware(next http.HandlerFunc) http.HandlerFunc {
 			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
 			return
 		}
+
+		err = ValidateSession(session.Value)
+		if err != nil {
+			log.Println("Unauthorized. Redirecting to login.")
+			w.WriteHeader(http.StatusUnauthorized) // Return 401 status
+			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
+			return
+		}
+
 		next(w, r)
 	}
 }
@@ -32,21 +47,8 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 
 		fmt.Println(session)
 
-		database := database.GetDatabaseInstance()
-		if database == nil || database.DB == nil {
-			fmt.Printf("Database connection error")
-			log.Fatal("Database connection error")
-			return
-		}
-
-		var expiresAt time.Time
-		err = database.DB.QueryRow(
-			"SELECT expires_at FROM sessions WHERE id = ?;",
-			session.Value,
-		).Scan(&expiresAt)
-
-		if err != nil || time.Now().After(expiresAt) {
-			// Si la session est invalide ou expirée, passer au prochain handler
+		err = ValidateSession(session.Value)
+		if err != nil {
 			next(w, r)
 			return
 		}

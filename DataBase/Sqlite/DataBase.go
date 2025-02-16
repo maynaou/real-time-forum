@@ -50,7 +50,7 @@ func InitDB() error {
             sender TEXT NOT NULL,
             receiver TEXT NOT NULL,
             content TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    	    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );`,
 
 		`CREATE TABLE IF NOT EXISTS liked_posts (

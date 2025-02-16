@@ -3,9 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	models "handler/DataBase/Models"
 	utils "handler/Utils"
-	"net/http"
 )
 
 func User(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +56,14 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := models.GetAllUsers(user.ID)
+	onlineUsers := GetActiveUsers(w, r)
 
+	onlineMap := make(map[string]bool)
+	for _, id := range onlineUsers {
+		onlineMap[id] = true
+	}
+
+	users, err := models.GetAllUsers(user.ID, onlineMap)
 	if err != nil {
 		fmt.Printf("Failed to retrieve all users: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

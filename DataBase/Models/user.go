@@ -3,9 +3,10 @@ package models
 import (
 	"context"
 	"fmt"
-	database "handler/DataBase/Sqlite"
 	"log"
 	"time"
+
+	database "handler/DataBase/Sqlite"
 )
 
 type RegisterRequest struct {
@@ -19,6 +20,7 @@ type RegisterRequest struct {
 	Gender    string    `json:"gender"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"last_seen"`
+	Online    bool      `json:"online"`
 }
 
 func CreateUser(user RegisterRequest) (string, error) {
@@ -55,8 +57,7 @@ func CreateUser(user RegisterRequest) (string, error) {
 	return user.ID, nil
 }
 
-
-func GetAllUsers(userID string) ([]RegisterRequest, error) {
+func GetAllUsers(userID string, onlineMap map[string]bool) ([]RegisterRequest, error) {
 	database := database.GetDatabaseInstance()
 	if database == nil || database.DB == nil {
 		fmt.Printf("Database connection error")
@@ -68,7 +69,7 @@ func GetAllUsers(userID string) ([]RegisterRequest, error) {
 
 	var users []RegisterRequest
 	query := "SELECT * FROM users where id != ?"
-	rows, err := database.DB.QueryContext(context, query , userID)
+	rows, err := database.DB.QueryContext(context, query, userID)
 	if err != nil {
 		fmt.Printf("failed to fetch users: %v", err)
 		return nil, fmt.Errorf("failed to fetch users: %v", err)
@@ -82,7 +83,9 @@ func GetAllUsers(userID string) ([]RegisterRequest, error) {
 			fmt.Printf("failed to scan user row: %v", err)
 			return nil, fmt.Errorf("failed to scan user row: %v", err)
 		}
+		user.Online = onlineMap[user.Nickname]
 		users = append(users, user)
+		fmt.Println(users)
 	}
 
 	if err := rows.Err(); err != nil {

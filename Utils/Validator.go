@@ -1,9 +1,13 @@
 package utils
 
 import (
-	models "handler/DataBase/Models"
+	"fmt"
 	"regexp"
 	"strconv"
+	"time"
+
+	models "handler/DataBase/Models"
+	database "handler/DataBase/Sqlite"
 )
 
 func ValidateRegisterFornData(user models.RegisterRequest) map[string]string {
@@ -112,3 +116,18 @@ func ValidateCommentInput(comment models.Comment) map[string]string {
 	return errors
 }
 
+func ValidateSession(sessionID string) error {
+	db := database.GetDatabaseInstance()
+	if db == nil || db.DB == nil {
+		return fmt.Errorf("database connection error")
+	}
+
+	var userID string
+	query := `SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?`
+	err := db.DB.QueryRow(query, sessionID, time.Now()).Scan(&userID)
+	if err != nil {
+		return fmt.Errorf("unauthorized: session not found")
+	}
+
+	return nil
+}

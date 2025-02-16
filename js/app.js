@@ -319,7 +319,7 @@ class ForumPage {
         }
     }
 
-    async fetchUsers() {
+    async fetchUsers () {
         try {
             const response = await fetch('/api/users',{
                 method: 'GET',
@@ -343,15 +343,19 @@ class ForumPage {
     displayUsers(users) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
-    
+        
         users.forEach(user => {
             const userItem = document.createElement('div');
             userItem.className = 'user-item';
-            userItem.innerText = user; // Assurez-vous que le champ username existe
-            sessionStorage.setItem('user',user)
-            userItem.addEventListener('click', function () {
-              new Message(user)
-            });
+            userItem.classList.add(user.online ? 'online' : 'offline');
+            userItem.innerText = user.nickname;
+            
+            if (user.online) {
+                sessionStorage.setItem('user', user.nickname);
+                userItem.addEventListener('click', function () {
+                    new Message(user.nickname);
+                });
+            }
     
             userList.appendChild(userItem);
         });
@@ -998,11 +1002,17 @@ class CommentPage {
     }
 }
 
+let lastLoadedTimestamp = null;
+
+let isFetching = false
+
 class Message {
     constructor(username) {
         this.username = username;
         this.render();
+        this.older = false;
         sessionStorage.setItem('currentPage', 'messagePage');
+        this.getMessage()
         this.ws = this.connectWebSocket();
     }
 
@@ -1046,15 +1056,90 @@ class Message {
         document.getElementById('back-button').addEventListener('click', () => {
             new ForumPage();
         });
+
+        const messageBoxContent = document.getElementById('messagesContainer');
+        messageBoxContent.addEventListener('scroll', this.debounce(() => {
+            if (isFetching) return;
+            if (messageBoxContent.scrollTop === 0) { 
+                console.log("Loading more messages...");
+                this.older = true
+                this.getMessage(); // Demande des messages plus anciens
+            }
+        }, 200)); 
+    }
+
+
+
+    async getMessage() {
+        if (isFetching) return;
+        isFetching = true; 
+        // Construire l'URL avec les paramètres de requête pour l'expéditeur et le destinataire
+        let url = `/api/message?sender=${sessionStorage.getItem('username')}&receiver=${this.username}`;
+       
+        if (this.older && lastLoadedTimestamp) {
+            url += `&before=${lastLoadedTimestamp}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+                const errorMessage = await response.json();
+                throw new Error(errorMessage || 'Message failed to fetch');
+            }
+
+            const messages = await response.json();
+            console.log(messages); 
+
+            const messagesContainer = document.getElementById('messagesContainer')
+
+            if (!this.older) {
+                messagesContainer.innerHTML = ''
+            }
+
+            if (!Array.isArray(messages)) {
+                isFetching = false;
+                console.error("Expected an array of messages, but got:", messages);
+                return; // Sortir de la fonction si ce n'est pas un tableau
+            }
+
+            messages.forEach((messageData,index) => {
+                if (messageData.sender === sessionStorage.getItem('username')) {
+                    this.displaySentMessage(messageData);
+                } else {
+                    this.displayReceivedMessage(messageData.content, messageData.created_at);
+                }
+                if (index === messages.length -1) {
+                    lastLoadedTimestamp = messageData.created_at; 
+                    console.log(lastLoadedTimestamp);
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+
+            isFetching = false;
+        } catch (error) {
+            alert('Error: ' + error.message); 
+            isFetching = false;
+        } 
+    }
+    
+     debounce(func, delay) {
+        let timer;
+        return function() {
+            clearTimeout(timer);
+            timer = setTimeout(func, delay);
+        };
     }
 
     connectWebSocket() {
 
-
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            this.displayReceivedMessage(data.message, data.time);
-            console.log(`Received message: ${data.sender}: ${data.message}`);
+            this.displayReceivedMessage(data.content, data.created_at);
+            console.log(`Received message: ${data.sender}: ${data.content}`);
         };
 
         ws.onerror = (error) => {
@@ -1073,12 +1158,9 @@ class Message {
         if (this.ws.readyState === WebSocket.OPEN) {
             const messageData = {
                 receiver: this.username,
-                message: message,
-                time: new Date().toLocaleTimeString()
+                content: message,
+                created_at: new Date().toISOString(),
             };
-
-            console.log(messageData);
-            
             this.ws.send(JSON.stringify(messageData));
             this.displaySentMessage(messageData);
         }
@@ -1088,20 +1170,23 @@ class Message {
         const messagesContainer = document.getElementById('messagesContainer');
         const messageItem = document.createElement('div');
         messageItem.classList.add('message', 'sender');
-        messageItem.textContent = ` ${messageData.message} ${messageData.time}`;
-        messagesContainer.appendChild(messageItem);
+        messageItem.textContent = `${messageData.content} ${messageData.created_at}`;
+            messagesContainer.prepend(messageItem);
     }
 
-    displayReceivedMessage( message, time) {
+    displayReceivedMessage(message, time) {
         const messagesContainer = document.getElementById('messagesContainer');
         const messageItem = document.createElement('div');
         messageItem.classList.add('message', 'receiver');
         messageItem.textContent = `${message} ${time}`;
-        messagesContainer.appendChild(messageItem);
+            messagesContainer.prepend(messageItem);
+
+
+
     }
 }
 
-const ws = new WebSocket("ws://localhost:8094/ws");
+const ws = new WebSocket("ws://localhost:8096/ws");
 
 
 function formatDate(date) {
