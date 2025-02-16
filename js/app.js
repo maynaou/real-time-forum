@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
     const currentPage = sessionStorage.getItem('currentPage' || 'home')
-    console.log(currentPage);
     
     navigateToPage(currentPage)
 
@@ -558,8 +557,6 @@ class ForumPage {
         if (categoryFilter === "myposts") {
             const username = this.getUsername();
             filteredPosts = this.posts.filter(post => post.username === username);
-            console.log(username);
-
         } else if (categoryFilter === "likedposts") {
             filteredPosts = this.posts.filter(post => post.isLiked);
         } else if (categoryFilter) {
@@ -1215,7 +1212,7 @@ class Message {
     }
 }
 
-const ws = new WebSocket("ws://localhost:8096/ws");
+const ws = new WebSocket("ws://localhost:8098/ws");
 
 
 function formatDate(date) {
