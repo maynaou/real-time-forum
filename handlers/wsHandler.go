@@ -47,6 +47,8 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
 
+	GetActiveUsers(w, r)
+
 	for {
 
 		var messageData models.MessageData
@@ -107,22 +109,47 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetActiveUsers(w http.ResponseWriter, r *http.Request) []string {
+
+
+func GetActiveUsers(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Lock()
 	defer OnlineConnections.Mutex.Unlock()
 
-	user, ok := utils.GetUserFromSession(r)
-
-	if !ok {
-		fmt.Println("user not found in session")
-		w.WriteHeader(http.StatusInternalServerError)
-		return nil
-	}
-	var activeUsers []string
+	// Convert map keys to a slice
+	var onlineUsers []string
 	for username := range OnlineConnections.Clients {
-		if user.Nickname != username {
-			activeUsers = append(activeUsers, username)
+		onlineUsers = append(onlineUsers, username)
+	}
+
+	// Create a map to check online status
+	onlineMap := make(map[string]bool)
+	for _, id := range onlineUsers {
+		onlineMap[id] = true
+	}
+
+	// Fetch all users
+	users, err := models.GetAllUsers(onlineMap)
+	if err != nil {
+		log.Printf("Failed to retrieve all users: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal the user data to JSON
+	message, err := json.Marshal(users)
+	if err != nil {
+		log.Println("Error marshalling user data:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	for _, connections := range OnlineConnections.Clients {
+		for _, conn := range connections {
+			// Ensure the connection is still open before sending the message
+			if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				log.Println("Error sending active users message:", err)
+			}
+
 		}
 	}
-	return activeUsers
 }

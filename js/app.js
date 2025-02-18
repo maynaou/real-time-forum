@@ -244,6 +244,8 @@ class RegisterForm {
     }
 }
 
+const ws = new WebSocket("ws://localhost:8090/ws");
+
 class ForumPage {
     constructor() {
         this.category = [
@@ -265,8 +267,18 @@ class ForumPage {
         this.selectedFilter = sessionStorage.getItem('categoryFilter') || '';
         sessionStorage.setItem('currentPage', 'forum');
         this.fetchPosts();
-        this.fetchUsers();
+        this.ws = new WebSocket("ws://localhost:8090/ws");
+        this.ws.onopen = () => {
+            console.log('WebSocket connection established');
+            //this.fetchUsers();  Fetch users when WebSocket is open
+        };
+        
+        this.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data);
+            this.displayUsers(data); // Update the UI with the new user objects
     }
+}
 
     render() {
         const forumContainer = document.getElementById('formContainer');
@@ -318,45 +330,29 @@ class ForumPage {
         }
     }
 
-    async fetchUsers () {
-        try {
-            const response = await fetch('/api/users',{
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
 
-                },
-            }); // Assurez-vous que cet endpoint existe
-            if (!response.ok) throw new Error('Failed to fetch users');
-    
-            const users = await response.json();
-            console.log(users);
-            if (users) {
-                this.displayUsers(users);
-            }
-        } catch (error) {
-            console.error('Error fetching users:', error);
-        }
-    }
+
 
     displayUsers(users) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
         
         users.forEach(user => {
-            const userItem = document.createElement('div');
-            userItem.className = 'user-item';
-            userItem.classList.add(user.online ? 'online' : 'offline');
-            userItem.innerText = user.nickname;
-            
-            if (user.online) {
-                sessionStorage.setItem('user', user.nickname);
-                userItem.addEventListener('click', function () {
-                    new Message(user.nickname);
-                });
+            if (user.nickname !== sessionStorage.getItem('username')) {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.classList.add(user.online ? 'online' : 'offline');
+                userItem.innerText = user.nickname;
+                
+                if (user.online) {
+                    sessionStorage.setItem('user', user.nickname);
+                    userItem.addEventListener('click', function () {
+                        new Message(user.nickname);
+                    });
+                }
+        
+                userList.appendChild(userItem);
             }
-    
-            userList.appendChild(userItem);
         });
     }
 
@@ -1212,7 +1208,7 @@ class Message {
     }
 }
 
-const ws = new WebSocket("ws://localhost:8098/ws");
+
 
 
 function formatDate(date) {

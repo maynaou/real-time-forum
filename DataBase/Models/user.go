@@ -57,7 +57,7 @@ func CreateUser(user RegisterRequest) (string, error) {
 	return user.ID, nil
 }
 
-func GetAllUsers(userID string, onlineMap map[string]bool) ([]RegisterRequest, error) {
+func GetAllUsers(onlineMap map[string]bool) ([]RegisterRequest, error) {
 	database := database.GetDatabaseInstance()
 	if database == nil || database.DB == nil {
 		fmt.Printf("Database connection error")
@@ -68,8 +68,8 @@ func GetAllUsers(userID string, onlineMap map[string]bool) ([]RegisterRequest, e
 	defer cancel()
 
 	var users []RegisterRequest
-	query := "SELECT * FROM users where id != ?"
-	rows, err := database.DB.QueryContext(context, query, userID)
+	query := "SELECT * FROM users "
+	rows, err := database.DB.QueryContext(context, query)
 	if err != nil {
 		fmt.Printf("failed to fetch users: %v", err)
 		return nil, fmt.Errorf("failed to fetch users: %v", err)
@@ -85,7 +85,6 @@ func GetAllUsers(userID string, onlineMap map[string]bool) ([]RegisterRequest, e
 		}
 		user.Online = onlineMap[user.Nickname]
 		users = append(users, user)
-		fmt.Println(users)
 	}
 
 	if err := rows.Err(); err != nil {
