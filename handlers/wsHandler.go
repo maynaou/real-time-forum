@@ -28,6 +28,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+var messageData models.MessageData
+
 func WebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -46,12 +48,9 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Lock()
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
-
-	GetActiveUsers(w, r)
-
+	GetActiveUsers(w)
 	for {
 
-		var messageData models.MessageData
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message:", err)
@@ -62,6 +61,11 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("Error unmarshalling message:", err)
 			continue
+		}
+
+		if messageData.Message == "logout" {
+			log.Printf("%s has logged out", user.Nickname)
+			break
 		}
 
 		if err := models.CreateMessage(user.Nickname, messageData); err != nil {
@@ -91,30 +95,43 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Receiver %s is not online", messageData.Receiver)
 		}
 	}
+	fmt.Println(OnlineConnections.Clients, len(OnlineConnections.Clients))
 	var temp []*websocket.Conn
 	if len(OnlineConnections.Clients[user.Nickname]) == 1 {
 		OnlineConnections.Mutex.Lock()
 		delete(OnlineConnections.Clients, user.Nickname)
 		OnlineConnections.Mutex.Unlock()
+	} else if messageData.Message == "logout" {
+		fmt.Println("KKKK")
+		OnlineConnections.Mutex.Lock()
+		delete(OnlineConnections.Clients, user.Nickname)
+		OnlineConnections.Mutex.Unlock()
+		messageData.Message = ""
 	} else {
 		for _, activeConn := range OnlineConnections.Clients[user.Nickname] {
 			if activeConn.RemoteAddr().String() != conn.RemoteAddr().String() {
 				temp = append(temp, activeConn)
 			}
 		}
-		OnlineConnections.Mutex.Lock()
-		OnlineConnections.Clients[user.Nickname] = temp
-		OnlineConnections.Mutex.Unlock()
+
+		if len(temp) > 0 {
+			OnlineConnections.Mutex.Lock()
+			OnlineConnections.Clients[user.Nickname] = temp
+			OnlineConnections.Mutex.Unlock()
+		} else {
+			OnlineConnections.Mutex.Lock()
+			delete(OnlineConnections.Clients, user.Nickname)
+			OnlineConnections.Mutex.Unlock()
+		}
 
 	}
+	fmt.Println(OnlineConnections.Clients, len(OnlineConnections.Clients))
+
+	GetActiveUsers(w)
+
 }
 
-
-
-func GetActiveUsers(w http.ResponseWriter, r *http.Request) {
-	OnlineConnections.Mutex.Lock()
-	defer OnlineConnections.Mutex.Unlock()
-
+func GetActiveUsers(w http.ResponseWriter) {
 	// Convert map keys to a slice
 	var onlineUsers []string
 	for username := range OnlineConnections.Clients {
@@ -149,7 +166,6 @@ func GetActiveUsers(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
 				log.Println("Error sending active users message:", err)
 			}
-
 		}
 	}
 }
