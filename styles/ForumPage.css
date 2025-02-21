@@ -448,6 +448,9 @@ input:focus {
     border: 2px solid white; /* Bordure blanche pour le cercle */
 }
 
+.user-item.online.highlight {
+    background-color: #4e34b6; /* Highlight color */
+}
 
 #userListContainer h2 {
     color: #ffffff; /* Couleur du titre */
@@ -539,6 +542,19 @@ input:focus {
 #messageForm textarea:focus {
     border-color: #4e34b6; /* Change la couleur de la bordure au focus */
     outline: none; /* Enlève le contour par défaut */
+}
+
+
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 2000;
 }
 
 @media (max-width: 736px) {

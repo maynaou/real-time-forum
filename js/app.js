@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const currentPage = sessionStorage.getItem('currentPage' || 'home')
+    const currentPage = sessionStorage.getItem('currentPage')
 
     navigateToPage(currentPage)
 
@@ -16,6 +16,8 @@ function navigateToPage(page) {
     const postId = sessionStorage.getItem('post_id')
     const posts = JSON.parse(sessionStorage.getItem('posts'));
     const user = sessionStorage.getItem('user')
+    const users = JSON.parse(sessionStorage.getItem('users'))
+    console.log(users)
     switch (page) {
         case 'login':
             new LoginForm();
@@ -30,7 +32,7 @@ function navigateToPage(page) {
             new CommentPage(postId, posts);
             break
         case 'messagePage':
-            new Message(user);
+            new Message(user,users);
             break
         default:
             new RegisterForm();
@@ -198,10 +200,8 @@ class RegisterForm {
         } catch (error) {
             console.error('Error checking authentication:', error);
         }
-        new LoginForm(); // Show home page if not authenticated or error occurs
+// Show home page if not authenticated or error occurs
     }
-
-
 
     async handleSubmit(event) {
         event.preventDefault();
@@ -242,7 +242,7 @@ class RegisterForm {
     }
 }
 
-const ws = new WebSocket("ws://localhost:8090/ws");
+// ws = new WebSocket("ws://localhost:8090/ws");
 
 class ForumPage {
     constructor() {
@@ -275,14 +275,19 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8090/ws"); 
+        this.ws = new WebSocket("ws://localhost:8098/ws"); 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            this.displayUsers(data); 
+           
+            if (data.sender) {
+                this.notifyUser(data.sender);
+            }  
+                this.displayUsers(data);    
+
         };
 
         this.ws.onerror = (error) => {
@@ -292,7 +297,57 @@ class ForumPage {
         this.ws.onclose = () => {
             console.log("WebSocket connection closed.");
         };
+        
     }
+
+
+    notifyUser(sender) {
+        console.log("Notification for HHHHHHHHHH:", sender);
+        
+        const userList = document.getElementById('userList');
+        const userItems = userList.getElementsByClassName('user-item');
+    
+        for (let userItem of userItems) {
+            if (userItem.innerText === sender) {
+                userItem.classList.add('highlight');
+                
+                setTimeout(() => {
+                    userItem.classList.remove('highlight');
+                }, 3000);
+                break; // Sortir de la boucle une fois l'utilisateur trouvé
+            }
+        }
+    }
+
+    displayUsers(users) {
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+
+       console.log(sessionStorage.getItem('username'));
+       
+
+        users.forEach(user => {
+            
+            if (user.nickname !== sessionStorage.getItem('username')) {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.classList.add(user.online ? 'online' : 'offline');
+                userItem.innerText = user.nickname;
+
+                if (user.online) {
+                    sessionStorage.setItem('user', user.nickname);
+                    userItem.addEventListener('click', function () {
+                        new Message(user.nickname,users);
+
+                    });
+                }
+
+                userList.appendChild(userItem);
+            }
+        });
+    }
+    
+    
 
     render() {
         const forumContainer = document.getElementById('formContainer');
@@ -348,34 +403,7 @@ class ForumPage {
 
 
 
-    displayUsers(users) {
-        const userList = document.getElementById('userList');
-        userList.innerHTML = '';
 
-       console.log(sessionStorage.getItem('username'));
-       
-
-        users.forEach(user => {
-            
-            if (user.nickname !== sessionStorage.getItem('username')) {
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                userItem.classList.add(user.online ? 'online' : 'offline');
-                userItem.innerText = user.nickname;
-
-                if (user.online) {
-                    sessionStorage.setItem('user', user.nickname);
-                    userItem.addEventListener('click', function () {
-                        new Message(user.nickname);
-                    });
-                }
-
-                userList.appendChild(userItem);
-            }
-        });
-       
-        
-    }
 
 
     resetView() {
@@ -1029,20 +1057,27 @@ let lastLoadedTimestamp = null;
 let isFetching = false
 
 class Message {
-    constructor(username) {
+    constructor(username,users) {
+        sessionStorage.setItem('users',JSON.stringify(users));
+        this.users = users;
         this.username = username;
         this.render();
         this.older = false;
         this.b = false;
         sessionStorage.setItem('currentPage', 'messagePage');
         this.getMessage()
-        this.ws = this.connectWebSocket();
+        this.connectWebSocket();
     }
 
     render() {
         const forumContainer = document.getElementById('formContainer');
-        forumContainer.innerHTML = ''; // Vide le conteneur
+       forumContainer.innerHTML = ''
         forumContainer.innerHTML = `
+            <div class="user">
+               <h1>Real-Time-Forum</h1>
+               <span id="logged-in-label">${sessionStorage.getItem('username')}<span>
+               <button id="logoutButton">❌</button>
+           </div>
             <div id="chatContainer">
                 <div id="messageFormContainer">
                     <div class="user-info">
@@ -1061,7 +1096,15 @@ class Message {
                     </form>
                 </div>
             </div>
+
+             <div id="userListContainer">
+            <h2>Users</h2>
+            <div class="user-list" id="userList">
+            </div>
+            </div>
         `;
+
+        this.displayUsers(this.users)
 
         document.getElementById('messageForm').addEventListener('submit', (event) => {
             event.preventDefault(); // Empêche le rechargement de la page
@@ -1089,6 +1132,36 @@ class Message {
                 this.getMessage(); // Demande des messages plus anciens
             }
         }, 200));
+    }
+
+    displayUsers(users) {
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+
+       console.log(sessionStorage.getItem('username'));
+       
+
+        users.forEach(user => {
+            
+            if (user.nickname !== sessionStorage.getItem('username')) {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.classList.add(user.online ? 'online' : 'offline');
+                userItem.innerText = user.nickname;
+
+                if (user.online) {
+                    sessionStorage.setItem('user', user.nickname);
+                    userItem.addEventListener('click', function () {
+                        new Message(user.nickname);
+
+                    });
+                }
+
+                userList.appendChild(userItem);
+            }
+        });
+       
+        
     }
 
 
@@ -1134,6 +1207,7 @@ class Message {
                     this.displaySentMessage(messageData);
                 } else {
                     this.displayReceivedMessage(messageData.content, messageData.created_at);
+                    
                 }
                 if (index === messages.length - 1) {
                     lastLoadedTimestamp = messageData.created_at;
@@ -1158,24 +1232,49 @@ class Message {
     }
 
     connectWebSocket() {
+        this.ws = new WebSocket("ws://localhost:8098/ws");
 
-        ws.onmessage = (event) => {
+        this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            console.log(data);
+            if (!data.created_at || isNaN(Date.parse(data.created_at))) {
+                console.error("Invalid or missing 'created_at' field:", data);
+                return;
+            }
             this.b = true
             this.displayReceivedMessage(data.content, data.created_at);
             console.log(`Received message: ${data.sender}: ${data.content}`);
+            this.notifyUser(data.sender); 
         };
 
-        ws.onerror = (error) => {
+        this.ws.onerror = (error) => {
             console.error(`WebSocket error: ${error}`);
         };
 
-        ws.onclose = () => {
+        this.ws.onclose = () => {
             console.log("WebSocket connection closed.");
         };
-
-        return ws;
     }
+
+    notifyUser(sender) {
+        console.log("Notification for:", sender);
+        
+        const userList = document.getElementById('userList');
+        const userItems = userList.getElementsByClassName('user-item');
+    
+        for (let userItem of userItems) {
+            if (userItem.innerText === sender) {
+                userItem.classList.add('highlight');
+                console.log("HHH",userItem);
+                
+                setTimeout(() => {
+                    userItem.classList.remove('highlight');
+                }, 3000);
+                break; // Sortir de la boucle une fois l'utilisateur trouvé
+            }
+        }
+    }
+
 
     addComment(message) {
         // Envoie le message au serveur WebSocket

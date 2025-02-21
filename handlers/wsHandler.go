@@ -48,9 +48,9 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Lock()
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
-	GetActiveUsers(w)
-	for {
 
+	for {
+		GetActiveUsers(w)
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message:", err)
