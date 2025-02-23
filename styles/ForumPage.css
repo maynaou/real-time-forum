@@ -448,7 +448,7 @@ input:focus {
     border: 2px solid white; /* Bordure blanche pour le cercle */
 }
 
-.user-item.online.highlight {
+.highlight {
     background-color: #4e34b6; /* Highlight color */
 }
 

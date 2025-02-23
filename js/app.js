@@ -282,12 +282,16 @@ class ForumPage {
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-           
-            if (data.sender) {
-                this.notifyUser(data.sender);
-            }  
-                this.displayUsers(data);    
-
+            
+            console.log(data,"HHHHHHJJJJJ");
+             if (!data.sender) {
+                this.displayUsers(data);  
+                sessionStorage.removeItem('sender')
+             }else {
+                sessionStorage.setItem('sender',data.sender)
+             }
+                
+             
         };
 
         this.ws.onerror = (error) => {
@@ -302,22 +306,26 @@ class ForumPage {
 
 
     notifyUser(sender) {
-        console.log("Notification for HHHHHHHHHH:", sender);
-        
-        const userList = document.getElementById('userList');
-        const userItems = userList.getElementsByClassName('user-item');
-    
-        for (let userItem of userItems) {
-            if (userItem.innerText === sender) {
-                userItem.classList.add('highlight');
-                
-                setTimeout(() => {
-                    userItem.classList.remove('highlight');
-                }, 3000);
-                break; // Sortir de la boucle une fois l'utilisateur trouvé
-            }
+        console.log("Notification for:", sender);
+
+        // Jouer un son de notification
+
+        // Mettre en surbrillance l'utilisateur dans la liste
+        const userElement = document.getElementById(`user-${sender}`);
+        if (userElement) {
+            userElement.classList.add('highlight');
+
+            setTimeout(() => {
+                userElement.classList.remove('highlight');
+            }, 3000); // Réinitialiser après 3 secondes
+        } else {
+            console.error("User element not found for:", sender);
         }
+
+        // Afficher une notification flottante
     }
+
+
 
     displayUsers(users) {
         const userList = document.getElementById('userList');
@@ -333,6 +341,14 @@ class ForumPage {
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
+           
+                if (user.nickname === sessionStorage.getItem('sender')) {
+                    userItem.style.backgroundColor = '#4e34b6'
+
+                    setTimeout(()=> {
+                     userItem.style.backgroundColor = ''
+                    },3000)
+                }
 
                 if (user.online) {
                     sessionStorage.setItem('user', user.nickname);
@@ -1104,7 +1120,7 @@ class Message {
             </div>
         `;
 
-        this.displayUsers(this.users)
+  
 
         document.getElementById('messageForm').addEventListener('submit', (event) => {
             event.preventDefault(); // Empêche le rechargement de la page
@@ -1134,35 +1150,7 @@ class Message {
         }, 200));
     }
 
-    displayUsers(users) {
-        const userList = document.getElementById('userList');
-        userList.innerHTML = '';
 
-       console.log(sessionStorage.getItem('username'));
-       
-
-        users.forEach(user => {
-            
-            if (user.nickname !== sessionStorage.getItem('username')) {
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                userItem.classList.add(user.online ? 'online' : 'offline');
-                userItem.innerText = user.nickname;
-
-                if (user.online) {
-                    sessionStorage.setItem('user', user.nickname);
-                    userItem.addEventListener('click', function () {
-                        new Message(user.nickname);
-
-                    });
-                }
-
-                userList.appendChild(userItem);
-            }
-        });
-       
-        
-    }
 
 
 
@@ -1237,14 +1225,15 @@ class Message {
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log(data);
-            if (!data.created_at || isNaN(Date.parse(data.created_at))) {
-                console.error("Invalid or missing 'created_at' field:", data);
-                return;
+            if (!data.created_at ) {
+                this.displayUsers(data)
+                sessionStorage.removeItem("sender");
+            } else {
+                this.b = true
+                this.displayReceivedMessage(data.content, data.created_at);
+                console.log(`Received message: ${data.sender}: ${data.content}`);
+                sessionStorage.setItem("sender",data.sender)
             }
-            this.b = true
-            this.displayReceivedMessage(data.content, data.created_at);
-            console.log(`Received message: ${data.sender}: ${data.content}`);
-            this.notifyUser(data.sender); 
         };
 
         this.ws.onerror = (error) => {
@@ -1256,23 +1245,42 @@ class Message {
         };
     }
 
-    notifyUser(sender) {
-        console.log("Notification for:", sender);
-        
+
+
+    displayUsers(users) {
         const userList = document.getElementById('userList');
-        const userItems = userList.getElementsByClassName('user-item');
-    
-        for (let userItem of userItems) {
-            if (userItem.innerText === sender) {
-                userItem.classList.add('highlight');
-                console.log("HHH",userItem);
-                
-                setTimeout(() => {
-                    userItem.classList.remove('highlight');
-                }, 3000);
-                break; // Sortir de la boucle une fois l'utilisateur trouvé
+        userList.innerHTML = '';
+
+       console.log(sessionStorage.getItem('sender'),"HHHHHHH");
+       
+
+        users.forEach(user => {
+            if (user.nickname !== sessionStorage.getItem('username')) {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                userItem.classList.add(user.online ? 'online' : 'offline');
+                userItem.innerText = user.nickname;
+                if (user.nickname  === sessionStorage.getItem('sender')) {
+                         userItem.style.backgroundColor = '#4e34b6'
+
+                         setTimeout(() => {
+                            userItem.style.backgroundColor = ''; // Remove highlight after 3 seconds
+                        }, 3000);
+                       
+                }
+
+                if (user.online) {
+                    sessionStorage.setItem('user', user.nickname);
+                    userItem.addEventListener('click', function () {
+                        new Message(user.nickname);
+
+                    });
+                }
+                userList.appendChild(userItem);
             }
-        }
+        });
+   console.log(userList);
+   
     }
 
 

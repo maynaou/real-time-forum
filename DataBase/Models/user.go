@@ -21,6 +21,7 @@ type RegisterRequest struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"last_seen"`
 	Online    bool      `json:"online"`
+	Sender    bool      `json:"sender"`
 }
 
 func CreateUser(user RegisterRequest) (string, error) {
