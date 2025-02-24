@@ -16,8 +16,6 @@ function navigateToPage(page) {
     const postId = sessionStorage.getItem('post_id')
     const posts = JSON.parse(sessionStorage.getItem('posts'));
     const user = sessionStorage.getItem('user')
-    const users = JSON.parse(sessionStorage.getItem('users'))
-    console.log(users)
     switch (page) {
         case 'login':
             new LoginForm();
@@ -32,7 +30,7 @@ function navigateToPage(page) {
             new CommentPage(postId, posts);
             break
         case 'messagePage':
-            new Message(user,users);
+            new Message(user);
             break
         default:
             new RegisterForm();
@@ -241,8 +239,7 @@ class RegisterForm {
         }
     }
 }
-
-// ws = new WebSocket("ws://localhost:8090/ws");
+// const ws = new WebSocket("ws://localhost:8090/ws");
 
 class ForumPage {
     constructor() {
@@ -271,27 +268,24 @@ class ForumPage {
         this.selectedFilter = sessionStorage.getItem('categoryFilter') || '';
         sessionStorage.setItem('currentPage', 'forum');
         await this.fetchPosts(); 
+        this.hasHighlightedUser = false; 
         this.connectWebSocket();
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8098/ws"); 
+        this.ws = new WebSocket("ws://localhost:8088/ws"); 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
 
         this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            console.log(data,"HHHHHHJJJJJ");
-             if (!data.sender) {
-                this.displayUsers(data);  
-                sessionStorage.removeItem('sender')
-             }else {
-                sessionStorage.setItem('sender',data.sender)
-             }
-                
-             
+            const data = JSON.parse(event.data);  
+            if (data.users) {
+                this.displayUsers(data.users,data.sender,data.receiver);   
+            } else {
+                this.hasHighlightedUser = true;  
+            }      
+         
         };
 
         this.ws.onerror = (error) => {
@@ -305,46 +299,27 @@ class ForumPage {
     }
 
 
-    notifyUser(sender) {
-        console.log("Notification for:", sender);
-
-        // Jouer un son de notification
-
-        // Mettre en surbrillance l'utilisateur dans la liste
-        const userElement = document.getElementById(`user-${sender}`);
-        if (userElement) {
-            userElement.classList.add('highlight');
-
-            setTimeout(() => {
-                userElement.classList.remove('highlight');
-            }, 3000); // Réinitialiser après 3 secondes
-        } else {
-            console.error("User element not found for:", sender);
-        }
-
-        // Afficher une notification flottante
-    }
-
-
-
-    displayUsers(users) {
+    displayUsers(users,sender,receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
 
-       console.log(sessionStorage.getItem('username'));
+        console.log(sessionStorage.getItem('username'));
        
+        console.log(users);
 
+        if (users === undefined) {
+            return
+        }
+        
         users.forEach(user => {
-            
             if (user.nickname !== sessionStorage.getItem('username')) {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
            
-                if (user.nickname === sessionStorage.getItem('sender')) {
+                if ((user.nickname === sender) &&  this.hasHighlightedUser && receiver != "") {
                     userItem.style.backgroundColor = '#4e34b6'
-
                     setTimeout(()=> {
                      userItem.style.backgroundColor = ''
                     },3000)
@@ -771,11 +746,7 @@ class ForumPage {
 
     async handleLogout() {
         try {
-
-                    // Informer le serveur via WebSocket de la déconnexion
         this.ws.send(JSON.stringify({ content: "logout" }));
-
-        // Attendre un court instant pour s'assurer que le message est envoyé
         await new Promise(resolve => setTimeout(resolve, 100));
             const response = await fetch('/api/logout', {
                 method: 'GET',
@@ -1073,13 +1044,12 @@ let lastLoadedTimestamp = null;
 let isFetching = false
 
 class Message {
-    constructor(username,users) {
-        sessionStorage.setItem('users',JSON.stringify(users));
-        this.users = users;
+    constructor(username) {
         this.username = username;
         this.render();
         this.older = false;
         this.b = false;
+        this.hasHighlightedUser = false;
         sessionStorage.setItem('currentPage', 'messagePage');
         this.getMessage()
         this.connectWebSocket();
@@ -1126,7 +1096,7 @@ class Message {
             event.preventDefault(); // Empêche le rechargement de la page
             const commentInput = document.getElementById('messageContent');
             const messageText = commentInput.value.trim(); // Supprime les espaces
-
+            
             if (messageText) {
                 this.addComment(messageText);
                 commentInput.value = '';
@@ -1138,6 +1108,8 @@ class Message {
         document.getElementById('back-button').addEventListener('click', () => {
             new ForumPage();
         });
+
+        document.getElementById('logoutButton').addEventListener('click',this.handleLogout.bind(this));
 
         const messageBoxContent = document.getElementById('messagesContainer');
         messageBoxContent.addEventListener('scroll', this.debounce(() => {
@@ -1220,19 +1192,22 @@ class Message {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8098/ws");
+        this.ws = new WebSocket("ws://localhost:8088/ws");
+
+        this.ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log(data);
-            if (!data.created_at ) {
-                this.displayUsers(data)
-                sessionStorage.removeItem("sender");
+            console.log("receiver", data)
+            if (!data.created_at) {
+                this.displayUsers(data.users,data.sender,data.receiver)
             } else {
                 this.b = true
                 this.displayReceivedMessage(data.content, data.created_at);
                 console.log(`Received message: ${data.sender}: ${data.content}`);
-                sessionStorage.setItem("sender",data.sender)
+                this.hasHighlightedUser = true; 
             }
         };
 
@@ -1247,26 +1222,22 @@ class Message {
 
 
 
-    displayUsers(users) {
+    displayUsers(users,sender,receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
-
-       console.log(sessionStorage.getItem('sender'),"HHHHHHH");
-       
-
         users.forEach(user => {
             if (user.nickname !== sessionStorage.getItem('username')) {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
-                if (user.nickname  === sessionStorage.getItem('sender')) {
+                console.log(this.hasHighlightedUser,"khfjksdhfhjsk",sender);
+                if ((user.nickname  === sender) && this.hasHighlightedUser && receiver != '') {
                          userItem.style.backgroundColor = '#4e34b6'
-
                          setTimeout(() => {
                             userItem.style.backgroundColor = ''; // Remove highlight after 3 seconds
-                        }, 3000);
-                       
+                        }, 3000); 
+                      this.hasHighlightedUser = false; 
                 }
 
                 if (user.online) {
@@ -1280,7 +1251,6 @@ class Message {
             }
         });
    console.log(userList);
-   
     }
 
 
@@ -1340,6 +1310,33 @@ class Message {
             this.b = false;
         } else {
             messagesContainer.prepend(messageItem);
+        }
+    }
+
+    async handleLogout() {
+        try {
+        this.ws.send(JSON.stringify({ content: "logout" }));
+        await new Promise(resolve => setTimeout(resolve, 100));
+            const response = await fetch('/api/logout', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result || 'Logout failed');
+            }
+
+            alert("You have been logged out.");
+            sessionStorage.clear();
+            const forumContainer = document.getElementById('formContainer');
+            forumContainer.innerHTML = '';
+            this.ws.close();
+            new LoginForm();
+        } catch (error) {
+            alert('Error: ' + error.message);
         }
     }
 }

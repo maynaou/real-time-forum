@@ -50,7 +50,7 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Unlock()
 
 	for {
-		GetActiveUsers(w)
+		GetActiveUsers(w, user)
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message:", err)
@@ -102,7 +102,6 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		delete(OnlineConnections.Clients, user.Nickname)
 		OnlineConnections.Mutex.Unlock()
 	} else if messageData.Message == "logout" {
-		fmt.Println("KKKK")
 		OnlineConnections.Mutex.Lock()
 		delete(OnlineConnections.Clients, user.Nickname)
 		OnlineConnections.Mutex.Unlock()
@@ -127,11 +126,10 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(OnlineConnections.Clients, len(OnlineConnections.Clients))
 
-	GetActiveUsers(w)
-
+	GetActiveUsers(w, user)
 }
 
-func GetActiveUsers(w http.ResponseWriter) {
+func GetActiveUsers(w http.ResponseWriter, user models.RegisterRequest) {
 	// Convert map keys to a slice
 	var onlineUsers []string
 	for username := range OnlineConnections.Clients {
@@ -152,8 +150,14 @@ func GetActiveUsers(w http.ResponseWriter) {
 		return
 	}
 
+	response := map[string]interface{}{
+		"sender": user.Nickname,
+		"users":  users,
+		"receiver" : messageData.Receiver,
+	}
+
 	// Marshal the user data to JSON
-	message, err := json.Marshal(users)
+	message, err := json.Marshal(response)
 	if err != nil {
 		log.Println("Error marshalling user data:", err)
 		w.WriteHeader(http.StatusInternalServerError)
