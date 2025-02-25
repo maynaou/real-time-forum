@@ -11,17 +11,14 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8088"
+var port = "8084"
 
 func main() {
-	if err := database.InitDB(); err != nil {
+	db, err := database.InitDB()
+	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-
-	db := database.GetDatabaseInstance()
-	if db.DB != nil {
-		log.Println("Connexion à la base de données réussie.")
-	}
+	defer db.Close()
 
 	http.HandleFunc("/js/", handler.StaticHandler)
 	http.HandleFunc("/styles/", handler.StaticHandler)

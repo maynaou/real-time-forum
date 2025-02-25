@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	models "handler/DataBase/Models"
@@ -25,13 +24,11 @@ func getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := models.GetMessages(sender, receiver,before)
+	messages, err := models.GetMessages(sender, receiver, before)
 	if err != nil {
 		http.Error(w, "Failed to fetch messages: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println("time",messages)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

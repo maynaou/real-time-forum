@@ -2,9 +2,10 @@ package userdata
 
 import (
 	"encoding/json"
-	database "handler/DataBase/Sqlite"
 	"net/http"
 	"time"
+
+	database "handler/DataBase/Sqlite"
 )
 
 func HandleLogout(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +15,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.GetDatabaseInstance().DB.Exec("DELETE FROM sessions WHERE id = ?", cookie.Value)
+	_, err = database.DB.Exec("DELETE FROM sessions WHERE id = ?", cookie.Value)
 	if err != nil {
 		http.Error(w, "Failed to log out", http.StatusInternalServerError)
 		return

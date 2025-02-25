@@ -81,7 +81,7 @@ class LoginForm {
                 console.log(result);
                 
                 if (result.authenticated === "true") {
-                    new ForumPage(); // Redirect to forum if authenticated
+                    new ForumPage(); 
                     return;
                 }
             }
@@ -185,20 +185,19 @@ class RegisterForm {
     
     async checkAuth() {
         try {
-            const response = await fetch('/api/register/', { method: 'GET' });
+            const response = await fetch('/api/register', { method: 'GET' });
             if (response.ok) {
                 const result = await response.json();
                 console.log(result);
                 
                 if (result.authenticated === "true") {
-                    new ForumPage(); // Redirect to forum if authenticated
+                    new ForumPage(); 
                     return;
                 }
             }
         } catch (error) {
             console.error('Error checking authentication:', error);
         }
-// Show home page if not authenticated or error occurs
     }
 
     async handleSubmit(event) {
@@ -220,7 +219,7 @@ class RegisterForm {
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
-                return; // Sortir de la fonction
+                return; 
             }
 
             const result = await response.json();
@@ -239,7 +238,6 @@ class RegisterForm {
         }
     }
 }
-// const ws = new WebSocket("ws://localhost:8090/ws");
 
 class ForumPage {
     constructor() {
@@ -273,7 +271,7 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8088/ws"); 
+        this.ws = new WebSocket("ws://localhost:8084/ws"); 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -1192,7 +1190,7 @@ class Message {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8088/ws");
+        this.ws = new WebSocket("ws://localhost:8084/ws");
 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');

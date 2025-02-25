@@ -27,7 +27,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&post)
 	if err != nil {
-		fmt.Println("Failed to decode request body: %v", err)
+		fmt.Printf("Failed to decode request body: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

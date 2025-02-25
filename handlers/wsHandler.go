@@ -95,7 +95,7 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Receiver %s is not online", messageData.Receiver)
 		}
 	}
-	fmt.Println(OnlineConnections.Clients, len(OnlineConnections.Clients))
+	
 	var temp []*websocket.Conn
 	if len(OnlineConnections.Clients[user.Nickname]) == 1 {
 		OnlineConnections.Mutex.Lock()
@@ -124,7 +124,6 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	fmt.Println(OnlineConnections.Clients, len(OnlineConnections.Clients))
 
 	GetActiveUsers(w, user)
 }

@@ -16,12 +16,7 @@ type MessageData struct {
 }
 
 func CreateMessage(username string, messageData MessageData) error {
-	db := database.GetDatabaseInstance()
-	if db.DB == nil {
-		return fmt.Errorf("database connection error")
-	}
-
-	_, err := db.DB.Exec(`
+	_, err := database.DB.Exec(`
 		INSERT INTO messages (sender, receiver, content,created_at)
 		VALUES (?, ?, ?,?)
 	`, username, messageData.Receiver, messageData.Message, messageData.CreatedAt)
@@ -30,16 +25,11 @@ func CreateMessage(username string, messageData MessageData) error {
 }
 
 func GetMessages(sender, receiver, before string) ([]MessageData, error) {
-	db := database.GetDatabaseInstance()
-	if db.DB == nil {
-		return nil, fmt.Errorf("database connection error")
-	}
-	fmt.Println(before, "LLLL")
 	var rows *sql.Rows
 	var err error
 
 	if before != "" {
-		rows, err = db.DB.Query(`
+		rows, err = database.DB.Query(`
             SELECT sender, receiver, content, created_at
             FROM messages
             WHERE ((sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?))
@@ -48,7 +38,7 @@ func GetMessages(sender, receiver, before string) ([]MessageData, error) {
             LIMIT 10
         `, sender, receiver, receiver, sender, before)
 	} else {
-		rows, err = db.DB.Query(`
+		rows, err = database.DB.Query(`
             SELECT sender, receiver, content, created_at
             FROM messages
             WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
@@ -58,7 +48,6 @@ func GetMessages(sender, receiver, before string) ([]MessageData, error) {
 	}
 
 	if err != nil {
-		fmt.Println("HHHH")
 		return nil, err
 	}
 
@@ -76,7 +65,6 @@ func GetMessages(sender, receiver, before string) ([]MessageData, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		fmt.Println("JJJJ")
 		return nil, err
 	}
 

@@ -117,14 +117,9 @@ func ValidateCommentInput(comment models.Comment) map[string]string {
 }
 
 func ValidateSession(sessionID string) error {
-	db := database.GetDatabaseInstance()
-	if db == nil || db.DB == nil {
-		return fmt.Errorf("database connection error")
-	}
-
 	var userID string
 	query := `SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?`
-	err := db.DB.QueryRow(query, sessionID, time.Now()).Scan(&userID)
+	err := database.DB.QueryRow(query, sessionID, time.Now()).Scan(&userID)
 	if err != nil {
 		return fmt.Errorf("unauthorized: session not found")
 	}

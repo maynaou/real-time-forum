@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
@@ -25,55 +24,29 @@ type RegisterRequest struct {
 }
 
 func CreateUser(user RegisterRequest) (string, error) {
-	db := database.GetDatabaseInstance()
-	if db == nil || db.DB == nil {
-		fmt.Println("Database connection error")
-		log.Fatal("Database connection error")
-		return "", fmt.Errorf("database connection error")
-	}
-
-	// Créer un contexte avec un délai d'expiration
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	// Requête SQL pour insérer un utilisateur
 	query := `
-        INSERT INTO users (id, nickname, first_name, last_name, email, age, gender, password,created_at, last_seen)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?)`
-
-	// Préparer la déclaration SQL
-	stmt, err := db.DB.PrepareContext(ctx, query)
-	if err != nil {
-		fmt.Println("Failed to prepare create user statement: %v", err)
-		return "", fmt.Errorf("failed to prepare create user statement: %v", err)
-	}
-	defer stmt.Close()
+        INSERT INTO users (id, nickname, first_name, last_name, email, age, gender, password, created_at, last_seen)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Exécuter la déclaration avec les données de l'utilisateur
-	_, err = stmt.ExecContext(ctx, user.ID, user.Nickname, user.FirstName, user.LastName, user.Email, user.Age, user.Gender, user.Password, time.Now().UTC(), time.Now().UTC())
+	_, err := database.DB.Exec(query, user.ID, user.Nickname, user.FirstName, user.LastName, user.Email, user.Age, user.Gender, user.Password, time.Now().UTC(), time.Now().UTC())
 	if err != nil {
-		fmt.Println("Failed to create user: %v", err)
-		return "", fmt.Errorf("failed to create user: %v", err)
+		log.Printf("Échec de la création de l'utilisateur : %v", err)
+		return "", fmt.Errorf("échec de la création de l'utilisateur : %w", err)
 	}
 
 	return user.ID, nil
 }
 
 func GetAllUsers(onlineMap map[string]bool) ([]RegisterRequest, error) {
-	database := database.GetDatabaseInstance()
-	if database == nil || database.DB == nil {
-		fmt.Printf("Database connection error")
-		log.Fatal("Database connection error")
-		return nil, fmt.Errorf("database connection error")
-	}
-	context, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var users []RegisterRequest
-	query := "SELECT * FROM users "
-	rows, err := database.DB.QueryContext(context, query)
+	query := "SELECT * FROM users"
+
+	// Exécuter la requête pour obtenir les utilisateurs
+	rows, err := database.DB.Query(query)
 	if err != nil {
-		fmt.Printf("failed to fetch users: %v", err)
-		return nil, fmt.Errorf("failed to fetch users: %v", err)
+		log.Printf("Échec de la récupération des utilisateurs : %v", err)
+		return nil, fmt.Errorf("échec de la récupération des utilisateurs : %w", err)
 	}
 	defer rows.Close()
 
@@ -81,16 +54,16 @@ func GetAllUsers(onlineMap map[string]bool) ([]RegisterRequest, error) {
 		var user RegisterRequest
 		err := rows.Scan(&user.ID, &user.Nickname, &user.FirstName, &user.LastName, &user.Email, &user.Age, &user.Gender, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
-			fmt.Printf("failed to scan user row: %v", err)
-			return nil, fmt.Errorf("failed to scan user row: %v", err)
+			log.Printf("Échec de la lecture de la ligne de l'utilisateur : %v", err)
+			return nil, fmt.Errorf("échec de la lecture de la ligne de l'utilisateur : %w", err)
 		}
 		user.Online = onlineMap[user.Nickname]
 		users = append(users, user)
 	}
 
 	if err := rows.Err(); err != nil {
-		fmt.Printf("error while iterating through rows: %v", err)
-		return nil, fmt.Errorf("error while iterating through rows: %v", err)
+		log.Printf("Erreur lors de l'itération à travers les lignes : %v", err)
+		return nil, fmt.Errorf("erreur lors de l'itération à travers les lignes : %w", err)
 	}
 
 	return users, nil

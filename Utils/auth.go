@@ -5,18 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	database "handler/DataBase/Sqlite"
 )
 
 func Middleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		database := database.GetDatabaseInstance()
-		if database == nil || database.DB == nil {
-			fmt.Printf("Database connection error")
-			log.Fatal("Database connection error")
-			return
-		}
 		session, err := r.Cookie("session_id")
 		if err != nil || session.Value == "" {
 			log.Println("Unauthorized. Redirecting to login.")

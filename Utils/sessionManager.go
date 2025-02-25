@@ -2,11 +2,12 @@ package utils
 
 import (
 	"fmt"
-	models "handler/DataBase/Models"
-	database "handler/DataBase/Sqlite"
 	"log"
 	"net/http"
 	"time"
+
+	models "handler/DataBase/Models"
+	database "handler/DataBase/Sqlite"
 
 	"github.com/google/uuid"
 )
@@ -108,13 +109,6 @@ func SetSession(w http.ResponseWriter, r *http.Request, id string) (*http.Cookie
 func GetUserFromSession(r *http.Request) (models.RegisterRequest, bool) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		return models.RegisterRequest{}, false
-	}
-
-	database := database.GetDatabaseInstance()
-	if database == nil || database.DB == nil {
-		fmt.Printf("Database connection error")
-		log.Fatal("Database connection error")
 		return models.RegisterRequest{}, false
 	}
 
