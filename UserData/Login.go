@@ -31,13 +31,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		NicknameOREmail = req.Email
 	}
 
-	validationErrors := utils.ValidateLoginFormInput(NicknameOREmail, req.Password)
-	if len(validationErrors) > 0 {
-		handler.ShowErrorPage(w, "Invalid form input", http.StatusBadRequest)
-		fmt.Printf("Validatio errors: %v", validationErrors)
-		return
-	}
-
 	user, err := models.GetUserDetails(req)
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)

@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"html"
 	"time"
 
 	database "handler/DataBase/Sqlite"
@@ -20,7 +21,7 @@ type Comment struct {
 
 func CreateComment(comment Comment, user RegisterRequest) (string, error) {
 	query := "INSERT INTO comments (id, user_id, post_id, content, created_at) VALUES (?, ?, ?, ?, ?)"
-
+	comment.Content = html.EscapeString(comment.Content)
 	_, err := database.DB.Exec(query, comment.ID, user.ID, comment.PostID, comment.Content, comment.CreatedAt)
 	if err != nil {
 		fmt.Printf("Échec de la création du commentaire : %v\n", err)

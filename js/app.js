@@ -62,6 +62,7 @@ class LoginForm {
                                 <button class="btn" type="submit">Login</button>
                             </form>
                             <p class="account">Don't Have An Account? <a href="#" id="showRegister">Register</a></p>
+                            <div id="loginMessage"></div>
                         </div>
                         <div class="form-img">
                             <img src="../styles/bg.png" alt="">
@@ -69,6 +70,7 @@ class LoginForm {
                     </div>
                 </div>
             </div>
+
         `;
 
         document.getElementById('loginForm').addEventListener('submit', this.handleSubmit.bind(this));
@@ -120,22 +122,26 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
+            const messageElement = document.getElementById('loginMessage'); 
+
             if (response.status === 401) {
+                messageElement.textContent = 'Unauthorized: Please check your credentials.'; // Display message
+                messageElement.style.color = 'red';
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
-                return; // Sortir de la fonction
+                return; 
             }
 
             const result = await response.json()
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
-
-            alert('Login successful!');
             new ForumPage();
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent = 'Error: ' + "password or nickname invalid"; 
+            messageElement.style.color = 'red'; 
         }
     }
 }
@@ -318,14 +324,12 @@ class ForumPage {
            
                 if ((user.nickname === sender) &&  this.hasHighlightedUser && receiver != "") {
                     userItem.style.backgroundColor = '#4e34b6'
-                    setTimeout(()=> {
-                     userItem.style.backgroundColor = ''
-                    },3000)
                 }
 
                 if (user.online) {
                     sessionStorage.setItem('user', user.nickname);
                     userItem.addEventListener('click', function () {
+                        userItem.style.backgroundColor = ''
                         new Message(user.nickname,users);
 
                     });
@@ -573,7 +577,7 @@ class ForumPage {
             this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
             document.getElementById('categoryFilter').value = '';
             console.log("Posts after adding new post:", this.posts);
-            this.displayPosts();
+            this.fetchPosts();
             event.target.reset();
             this.selectedCategories = [];
             this.renderCategories();
@@ -967,7 +971,7 @@ class CommentPage {
             this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
 
 
-            this.renderComments();
+            this.fetchComments();
         } catch (error) {
 
             alert('Erreur: ' + error.message);
@@ -1044,13 +1048,30 @@ let isFetching = false
 class Message {
     constructor(username) {
         this.username = username;
-        this.render();
         this.older = false;
         this.b = false;
         this.hasHighlightedUser = false;
         sessionStorage.setItem('currentPage', 'messagePage');
+        this.init()
+    }
+
+    async init() {
+        this.render();
         this.getMessage()
         this.connectWebSocket();
+        this.cookie = this.getCookie("session_id")
+        console.log(this.cookie);
+    }
+    
+    getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        
+        return null; 
     }
 
     render() {
@@ -1127,7 +1148,6 @@ class Message {
     async getMessage() {
         if (isFetching) return;
         isFetching = true;
-        // Construire l'URL avec les paramètres de requête pour l'expéditeur et le destinataire
         let url = `/api/message?sender=${sessionStorage.getItem('username')}&receiver=${this.username}`;
 
         if (this.older && lastLoadedTimestamp) {
@@ -1140,10 +1160,19 @@ class Message {
                 headers: { 'Content-Type': 'application/json' },
             });
 
+            if (response.status === 401) {
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new LoginForm();
+                return;
+            }
+
             if (!response.ok) {
                 const errorMessage = await response.json();
                 throw new Error(errorMessage || 'Message failed to fetch');
             }
+
+    
 
             const messages = await response.json();
             console.log(messages);
@@ -1191,7 +1220,6 @@ class Message {
 
     connectWebSocket() {
         this.ws = new WebSocket("ws://localhost:8084/ws");
-
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -1219,7 +1247,6 @@ class Message {
     }
 
 
-
     displayUsers(users,sender,receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
@@ -1232,10 +1259,7 @@ class Message {
                 console.log(this.hasHighlightedUser,"khfjksdhfhjsk",sender);
                 if ((user.nickname  === sender) && this.hasHighlightedUser && receiver != '') {
                          userItem.style.backgroundColor = '#4e34b6'
-                         setTimeout(() => {
-                            userItem.style.backgroundColor = ''; // Remove highlight after 3 seconds
-                        }, 3000); 
-                      this.hasHighlightedUser = false; 
+                         this.hasHighlightedUser = false; 
                 }
 
                 if (user.online) {
@@ -1248,18 +1272,28 @@ class Message {
                 userList.appendChild(userItem);
             }
         });
-   console.log(userList);
     }
 
 
-    addComment(message) {
-        // Envoie le message au serveur WebSocket
+
+   async addComment(message) {
         if (this.ws.readyState === WebSocket.OPEN) {
+            let y = this.getCookie("session_id")
+            
+            if (this.cookie !== y) {                  
+                this.ws.send(JSON.stringify({ cookie: this.cookie })); 
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new LoginForm();
+                return;
+            }
+
             const messageData = {
                 receiver: this.username,
                 content: message,
                 created_at: new Date().toISOString(),
             };
+
             this.ws.send(JSON.stringify(messageData));
             this.b = true;
             this.displaySentMessage(messageData);
@@ -1274,10 +1308,9 @@ class Message {
         const options = {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false // Utiliser le format 24 heures
+            hour12: false 
         };
 
-        // Formater le temps
         const formattedTime = createdAt.toLocaleTimeString([], options);
         messageItem.textContent = `${messageData.content} ${formattedTime}`;
         if (this.b) {
@@ -1338,6 +1371,21 @@ class Message {
         }
     }
 }
+
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    
+    return null; // Cookie not found
+}
+
+// Example usage
+const myCookie = getCookie('session_id');
 
 
 

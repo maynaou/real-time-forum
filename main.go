@@ -31,7 +31,7 @@ func main() {
 	http.HandleFunc("/api/like", utils.Middleware(handler.Like))
 	http.HandleFunc("/api/dislike", utils.Middleware(handler.Dislike))
 	http.HandleFunc("/api/comment/", utils.Middleware(handler.Comment))
-	http.HandleFunc("/api/message", handler.Message)
+	http.HandleFunc("/api/message", utils.Middleware(handler.Message))
 	http.HandleFunc("/ws", handler.WebSocket)
 	fmt.Println("Server started on http://localhost:" + port)
 	http.ListenAndServe(":"+port, nil)

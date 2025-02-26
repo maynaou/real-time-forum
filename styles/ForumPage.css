@@ -47,6 +47,13 @@ p {
     transition: background-color 0.3s, color 0.3s;
 }
 
+#loginMessage {
+    border-radius: 35px;
+    padding: 14px 20px;
+    width: 100%; 
+    border: 1px solid #4e34b6;
+}
+
 .btn {
     background-color: #4e34b6;
     color: #ffffff;

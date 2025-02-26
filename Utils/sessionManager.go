@@ -24,10 +24,7 @@ func SetSession(w http.ResponseWriter, r *http.Request, id string) (*http.Cookie
 			Name:     "session_id",
 			Value:    uuid.New().String(),
 			Path:     "/",
-			HttpOnly: false,
 			Expires:  time.Now().Add(2 * time.Hour),
-			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
 		}
 		http.SetCookie(w, cookie)
 
@@ -54,10 +51,7 @@ func SetSession(w http.ResponseWriter, r *http.Request, id string) (*http.Cookie
 				Name:     "session_id",
 				Value:    uuid.New().String(),
 				Path:     "/",
-				HttpOnly: false,
 				Expires:  time.Now().Add(2 * time.Hour),
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
 			}
 
 			http.SetCookie(w, cookie)
@@ -82,10 +76,7 @@ func SetSession(w http.ResponseWriter, r *http.Request, id string) (*http.Cookie
 				Name:     "session_id",
 				Value:    uuid.New().String(),
 				Path:     "/",
-				HttpOnly: false,
 				Expires:  time.Now().Add(2 * time.Hour),
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
 			}
 			http.SetCookie(w, cookie)
 

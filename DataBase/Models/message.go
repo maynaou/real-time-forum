@@ -13,6 +13,7 @@ type MessageData struct {
 	Message   string `json:"content"`
 	CreatedAt string `json:"created_at"`
 	Type      string `json:"type"`
+	Cookie    string `json:"cookie"`
 }
 
 func CreateMessage(username string, messageData MessageData) error {

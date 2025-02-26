@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"html"
 	"strings"
 	"time"
 
@@ -24,7 +25,8 @@ type Post struct {
 
 func CreatePost(post Post, user RegisterRequest) (string, error) {
 	query := "INSERT INTO posts (id, user_id, title, content, category, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-
+	post.Content = html.EscapeString(post.Content)
+	post.Title = html.EscapeString(post.Title)
 	categoriesStr := strings.Join(post.Categories, ",")
 	_, err := database.DB.Exec(query, post.ID, user.ID, post.Title, post.Content, categoriesStr, post.CreatedAt)
 	if err != nil {

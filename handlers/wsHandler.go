@@ -48,9 +48,10 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Lock()
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
-
+	fmt.Println("hhh", messageData.Cookie)
 	for {
 		GetActiveUsers(w, user)
+
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message:", err)
@@ -61,6 +62,14 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("Error unmarshalling message:", err)
 			continue
+		}
+		fmt.Println("hhh", messageData.Cookie)
+		if messageData.Cookie != "" {
+			a := models.DeleteSession(messageData.Cookie)
+			if a == nil {
+				fmt.Println("delete session")
+				break
+			}
 		}
 
 		if messageData.Message == "logout" {
@@ -95,12 +104,18 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Receiver %s is not online", messageData.Receiver)
 		}
 	}
-	
+
 	var temp []*websocket.Conn
 	if len(OnlineConnections.Clients[user.Nickname]) == 1 {
 		OnlineConnections.Mutex.Lock()
 		delete(OnlineConnections.Clients, user.Nickname)
 		OnlineConnections.Mutex.Unlock()
+	} else if messageData.Cookie != "" {
+		OnlineConnections.Mutex.Lock()
+		delete(OnlineConnections.Clients, user.Nickname)
+		OnlineConnections.Mutex.Unlock()
+		messageData.Cookie = ""
+		messageData.Receiver = ""
 	} else if messageData.Message == "logout" {
 		OnlineConnections.Mutex.Lock()
 		delete(OnlineConnections.Clients, user.Nickname)
@@ -129,19 +144,16 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetActiveUsers(w http.ResponseWriter, user models.RegisterRequest) {
-	// Convert map keys to a slice
 	var onlineUsers []string
 	for username := range OnlineConnections.Clients {
 		onlineUsers = append(onlineUsers, username)
 	}
 
-	// Create a map to check online status
 	onlineMap := make(map[string]bool)
 	for _, id := range onlineUsers {
 		onlineMap[id] = true
 	}
 
-	// Fetch all users
 	users, err := models.GetAllUsers(onlineMap)
 	if err != nil {
 		log.Printf("Failed to retrieve all users: %v", err)
@@ -150,9 +162,9 @@ func GetActiveUsers(w http.ResponseWriter, user models.RegisterRequest) {
 	}
 
 	response := map[string]interface{}{
-		"sender": user.Nickname,
-		"users":  users,
-		"receiver" : messageData.Receiver,
+		"sender":   user.Nickname,
+		"users":    users,
+		"receiver": messageData.Receiver,
 	}
 
 	// Marshal the user data to JSON
@@ -165,7 +177,6 @@ func GetActiveUsers(w http.ResponseWriter, user models.RegisterRequest) {
 
 	for _, connections := range OnlineConnections.Clients {
 		for _, conn := range connections {
-			// Ensure the connection is still open before sending the message
 			if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
 				log.Println("Error sending active users message:", err)
 			}

@@ -28,7 +28,6 @@ func GetUserDetails(req LoginRequest) (storedreq LoginRequest, err error) {
 
 	err = row.Scan(&storedreq.UserID, &storedreq.Nickname, &storedreq.Email, &storedreq.Password)
 	if err != nil {
-
 		fmt.Printf("Failed to scan row for identifier %s: %v", identifier, err)
 		return storedreq, err
 	}

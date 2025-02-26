@@ -59,3 +59,4 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 	}
 }
+

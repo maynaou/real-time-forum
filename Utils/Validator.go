@@ -56,32 +56,6 @@ func ValidateRegisterFornData(user models.RegisterRequest) map[string]string {
 	return errors
 }
 
-func ValidateLoginFormInput(NicknameOREmail, password string) map[string]string {
-	errors := make(map[string]string)
-	var req models.LoginRequest
-	if NicknameOREmail == "" {
-		errors["usernameOrEmail"] = "username or email is required"
-	} else {
-		emailRegex := regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
-		isEmail := emailRegex.MatchString(NicknameOREmail)
-		if isEmail {
-			req.Email = NicknameOREmail
-		} else {
-			req.Nickname = NicknameOREmail
-		}
-	}
-
-	if password == "" {
-		errors["password"] = "password is required"
-	} else if len(password) < 6 {
-		errors["password"] = "password should be at least 6 characters long"
-	}
-
-	req.Password = password
-
-	return errors
-}
-
 func ValidationPostInput(post models.Post) map[string]string {
 	errors := make(map[string]string)
 
