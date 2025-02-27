@@ -66,6 +66,7 @@ func createComment(w http.ResponseWriter, r *http.Request) {
 		"created_at": comment.CreatedAt,
 		"likes":      0,
 		"dislikes":   0,
+		"message":    "comment successful",
 	}
 
 	data, err := json.Marshal(response)

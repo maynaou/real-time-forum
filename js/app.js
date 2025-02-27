@@ -278,7 +278,7 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8066/ws"); 
+        this.ws = new WebSocket("ws://localhost:8070/ws"); 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -359,7 +359,7 @@ class ForumPage {
             </div>
             </div>
             
-            <div id="postsContainer">
+            <div id="postsContainer" style="overflow-y: auto; height: 1000px;">
             </div>
         `;
 
@@ -576,6 +576,16 @@ class ForumPage {
                 throw new Error('Post ID is undefined');
             }
 
+            
+
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent =  result.message; 
+            messageElement.style.color = 'green'; 
+
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000); 
+
             this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
             document.getElementById('categoryFilter').value = '';
             console.log("Posts after adding new post:", this.posts);
@@ -587,6 +597,9 @@ class ForumPage {
             const messageElement = document.getElementById('loginMessage'); 
             messageElement.textContent = 'Error: ' + error.message; 
             messageElement.style.color = 'red'; 
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000); 
         }
 
     }
@@ -800,9 +813,17 @@ class CommentPage {
     render() {
         const categoryContainer = document.querySelector('.filter-container');
         const postForm = document.getElementById('postForm');
-
+        const messageElement = document.getElementById('loginMessage'); 
+        const userList = document.getElementById('userListContainer');
+        if (userList) {
+            userList.remove();
+        }
         if (categoryContainer) {
             categoryContainer.remove();
+        }
+
+        if (messageElement) {
+            messageElement.remove();
         }
 
         if (postForm) {
@@ -843,14 +864,14 @@ class CommentPage {
                  <div  id="postForm">
                 <input type="text" id="comment-input-${this.postId}" placeholder="Votre commentaire" />
                     <div class="reaction-buttons">
-                    <button class="like-button" id="add-comment-button-${this.postId}">Ajouter un commentaire</button>
                     <button class="dislike-button" id="back-button">Retour</button>
+                    <button class="like-button" id="add-comment-button-${this.postId}">Ajouter un commentaire</button>
                 </div>
-                
                 </div>
-                </div id="loginMessage"></div>
-            <div id="comments-list">
-            </div>`;
+                 <div id="loginMessage"></div>
+                   <div id="comments-list" style="overflow-y: auto; height: 1000px;" >
+            </div>`
+           ;
 
         document.getElementById(`add-comment-button-${this.postId}`).addEventListener('click', () => {
             const commentInput = document.getElementById(`comment-input-${this.postId}`);
@@ -976,6 +997,14 @@ class CommentPage {
                 throw new Error( errorMessages || 'Erreur lors de l\'ajout du commentaire');
             }
 
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent = newComment.message; 
+            messageElement.style.color = 'green'; 
+
+            setTimeout(()=> {
+                messageElement.textContent = ''
+              },3000)
+
             this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
 
 
@@ -984,6 +1013,9 @@ class CommentPage {
             const messageElement = document.getElementById('loginMessage'); 
             messageElement.textContent = 'Error: ' + error.message; 
             messageElement.style.color = 'red'; 
+            setTimeout(()=> {
+              messageElement.textContent = ''
+            },3000)
         }
     }
 
@@ -1100,7 +1132,7 @@ class Message {
                         </div>
                         <h4>${this.username}</h4>
                     </div>
-                    <div id="messagesContainer"></div>
+                    <div id="messagesContainer" style="overflow-y: auto; height: 500px;"></div>
                     <form id="messageForm">
                         <textarea id="messageContent" placeholder="Type your message here..." required></textarea>
                         <div class="reaction-buttons">
@@ -1228,7 +1260,7 @@ class Message {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8066/ws");
+        this.ws = new WebSocket("ws://localhost:8070/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };

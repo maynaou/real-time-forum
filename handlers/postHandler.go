@@ -71,6 +71,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		"comments":   0,
 		"likes":      0, 
 		"dislikes":   0, 
+		"message" : "post successful",
 	}
 
 	data, err := json.Marshal(response)

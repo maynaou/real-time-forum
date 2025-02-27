@@ -488,11 +488,9 @@ input:focus {
 }
 
 #messagesContainer {
-    height: 600px;
     display: flex;
     flex-direction: column;
      /* Hauteur maximale pour le conteneur des messages */
-    overflow-y: auto; /* Permet le défilement */
     margin-bottom: 15px; /* Espacement en bas */
     margin-top: 10px;
     padding: 10px; /* Espacement interne */
