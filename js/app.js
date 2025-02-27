@@ -69,7 +69,7 @@ class LoginForm {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> 
 
         `;
 
@@ -77,7 +77,7 @@ class LoginForm {
     }
     async checkAuth() {
         try {
-            const response = await fetch('/api/login', { method: 'GET' });
+            const response = await fetch('/api/login');
             if (response.ok) {
                 const result = await response.json();
                 console.log(result);
@@ -122,25 +122,23 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
-            const messageElement = document.getElementById('loginMessage'); 
-
+            
             if (response.status === 401) {
-                messageElement.textContent = 'Unauthorized: Please check your credentials.'; // Display message
-                messageElement.style.color = 'red';
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
                 return; 
             }
-
             const result = await response.json()
+            
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
             new ForumPage();
         } catch (error) {
+        
             const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = 'Error: ' + "password or nickname invalid"; 
+            messageElement.textContent = 'Error: ' + error.message; 
             messageElement.style.color = 'red'; 
         }
     }
@@ -178,6 +176,7 @@ class RegisterForm {
                                 <button class="btn" type="submit">Register</button>
                             </form>
                             <p class="account">Already have an account? <a href="#" id="showLogin">Log in</a></p>
+                             <div id="loginMessage"></div>
                         </div>
                         <div class="form-img">
                             <img src="../styles/bg.png" alt="">
@@ -229,18 +228,20 @@ class RegisterForm {
             }
 
             const result = await response.json();
-            console.log(result.message)
+            const errorMessages = Object.entries(result).map(([field, message]) => `${field}: ${message}`);
+ 
+            
             if (!response.ok) {
-                throw new Error(result.message || 'Registration failed');
+                throw new Error( errorMessages|| 'Registration failed');
             }
 
+            
 
-
-            alert('Registration successful!');
             new LoginForm();
         } catch (error) {
-            console.log("Error:", error.message);
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent = 'Error: ' + error.message; 
+            messageElement.style.color = 'red'; 
         }
     }
 }
@@ -277,7 +278,7 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8084/ws"); 
+        this.ws = new WebSocket("ws://localhost:8066/ws"); 
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -381,7 +382,7 @@ class ForumPage {
                     'Content-Type': 'application/json',
 
                 },
-            }); // Assurez-vous que cet endpoint existe
+            }); 
             if (!response.ok) throw new Error('Failed to fetch users');
 
             const user = await response.json();
@@ -410,6 +411,7 @@ class ForumPage {
                     <div id="categoriesContainer"></div> <!-- Category selection here -->
                     <button id="submit" type="submit">Post</button>
                 </form>
+                <div id="loginMessage"></div>
             `);
         }
 
@@ -441,7 +443,6 @@ class ForumPage {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-
                 },
             });
 
@@ -565,15 +566,16 @@ class ForumPage {
             }
 
             const result = await response.json();
+
+            const errorMessages = Object.entries(result).map(([field, message]) => `${field}: ${message}`);
             if (!response.ok) {
-                throw new Error(result.message || 'Logout failed');
+                throw new Error(errorMessages || 'post failed');
             }
 
             if (!result.id) {
                 throw new Error('Post ID is undefined');
             }
 
-            alert("post secced");
             this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
             document.getElementById('categoryFilter').value = '';
             console.log("Posts after adding new post:", this.posts);
@@ -582,7 +584,9 @@ class ForumPage {
             this.selectedCategories = [];
             this.renderCategories();
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent = 'Error: ' + error.message; 
+            messageElement.style.color = 'red'; 
         }
 
     }
@@ -842,7 +846,9 @@ class CommentPage {
                     <button class="like-button" id="add-comment-button-${this.postId}">Ajouter un commentaire</button>
                     <button class="dislike-button" id="back-button">Retour</button>
                 </div>
+                
                 </div>
+                </div id="loginMessage"></div>
             <div id="comments-list">
             </div>`;
 
@@ -964,8 +970,10 @@ class CommentPage {
                 return;
             }
             const newComment = await response.json();
+            const errorMessages = Object.entries(newComment).map(([field, message]) => `${field}: ${message}`);
+
             if (!response.ok) {
-                throw new Error('Erreur lors de l\'ajout du commentaire');
+                throw new Error( errorMessages || 'Erreur lors de l\'ajout du commentaire');
             }
 
             this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
@@ -973,8 +981,9 @@ class CommentPage {
 
             this.fetchComments();
         } catch (error) {
-
-            alert('Erreur: ' + error.message);
+            const messageElement = document.getElementById('loginMessage'); 
+            messageElement.textContent = 'Error: ' + error.message; 
+            messageElement.style.color = 'red'; 
         }
     }
 
@@ -1219,7 +1228,7 @@ class Message {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8084/ws");
+        this.ws = new WebSocket("ws://localhost:8066/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };

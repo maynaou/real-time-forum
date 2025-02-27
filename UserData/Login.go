@@ -31,12 +31,13 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		NicknameOREmail = req.Email
 	}
 
-	user, err := models.GetUserDetails(req)
-	if err != nil {
+	user := models.GetUserDetails(req)
+	/*if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		fmt.Println("Invalid credentials")
 		return
-	}
+	}*/
+
 	if (user.Nickname == req.Nickname || user.Email == req.Email) && utils.ComparePasswords(user.Password, req.Password) {
 		_, err := utils.SetSession(w, r, user.UserID)
 		if err != nil {
@@ -58,9 +59,19 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Error encoding JSON: %v", err)
 			return
 		}
+
 	} else {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		fmt.Println("Invalid credentials")
-		return
+		response := LoginResponse{
+			Message: "Invalid password or nickname",
+		}
+
+		fmt.Println(response)
+
+		w.WriteHeader(http.StatusBadRequest) // Changed to 401 Unauthorized
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+			fmt.Printf("Error encoding JSON: %v", err)
+			return
+		}
 	}
 }

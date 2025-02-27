@@ -14,33 +14,33 @@ func ValidateRegisterFornData(user models.RegisterRequest) map[string]string {
 	errors := make(map[string]string)
 
 	if user.Nickname == "" {
-		errors["nickname"] = "nickname cannot be empty"
+		errors["nickname"] = "cannot be empty"
 	} else {
 		if len(user.Nickname) < 2 || len(user.Nickname) > 15 {
-			errors["nickname"] = "nickname must be between 2 and 15 characters in length"
+			errors["nickname"] = "must be between 2 and 15 characters in length"
 		}
 		if !regexp.MustCompile(`^[a-zA-Z0-9_]+$`).MatchString(user.Nickname) {
-			errors["nickname"] = "nickname can only contain letters, numbers, and underscores"
+			errors["nickname"] = "can only contain letters, numbers, and underscores"
 		}
 	}
 
 	if user.FirstName == "" {
-		errors["first_name"] = "first name cannot be empty"
+		errors["first_name"] = "cannot be empty"
 	}
 
 	if user.LastName == "" {
-		errors["last_name"] = "last name cannot be empty"
+		errors["last_name"] = "cannot be empty"
 	}
 
 	if user.Email == "" {
-		errors["email"] = "email cannot be empty"
+		errors["email"] = "cannot be empty"
 	} else if !regexp.MustCompile(`\S+@\S+\.\S+`).MatchString(user.Email) {
-		errors["email"] = "invalid email format"
+		errors["email"] = "invalid format"
 	}
 
 	age, err := strconv.Atoi(user.Age)
 	if err != nil || age < 0 {
-		errors["age"] = "invalid age"
+		errors["age"] = "invalid"
 	}
 
 	if user.Gender != "male" && user.Gender != "female" {
@@ -48,9 +48,9 @@ func ValidateRegisterFornData(user models.RegisterRequest) map[string]string {
 	}
 
 	if user.Password == "" {
-		errors["password"] = "password cannot be empty"
+		errors["password"] = "cannot be empty"
 	} else if len(user.Password) < 6 || len(user.Password) > 30 {
-		errors["password"] = "password must be between 6 and 30 characters in length"
+		errors["password"] = "must be between 6 and 30 characters in length"
 	}
 
 	return errors
@@ -60,15 +60,15 @@ func ValidationPostInput(post models.Post) map[string]string {
 	errors := make(map[string]string)
 
 	if post.Title == "" {
-		errors["title"] = "title cannot be empty"
+		errors["title"] = "cannot be empty"
 	} else if len(post.Title) > 50 {
-		errors["title"] = "title cannot exceed 50 characters"
+		errors["title"] = "cannot exceed 50 characters"
 	}
 
 	if post.Content == "" {
-		errors["content"] = "content cannot be empty"
+		errors["content"] = "cannot be empty"
 	} else if len(post.Content) > 1000 {
-		errors["content"] = "content cannot exceed 1000 characters"
+		errors["content"] = "cannot exceed 1000 characters"
 	}
 
 	if len(post.Categories) == 0 {

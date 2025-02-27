@@ -11,7 +11,7 @@ import (
 	handler "handler/handlers"
 )
 
-var port = "8084"
+var port = "8066"
 
 func main() {
 	db, err := database.InitDB()

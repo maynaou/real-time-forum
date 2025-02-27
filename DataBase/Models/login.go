@@ -13,24 +13,22 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func GetUserDetails(req LoginRequest) (storedreq LoginRequest, err error) {
+func GetUserDetails(req LoginRequest) (storedreq LoginRequest) {
 	var identifier string
 	if req.Nickname != "" {
 		identifier = req.Nickname
 	} else if req.Email != "" {
 		identifier = req.Email
-	} else {
-		fmt.Println("Both username and email are empty")
-		return storedreq, fmt.Errorf("both username and email are empty")
-	}
+	} 
+
 	query := "SELECT id, nickname, email, password FROM users WHERE nickname = ? OR email = ?"
 	row := database.DB.QueryRow(query, identifier, identifier)
 
-	err = row.Scan(&storedreq.UserID, &storedreq.Nickname, &storedreq.Email, &storedreq.Password)
+	err := row.Scan(&storedreq.UserID, &storedreq.Nickname, &storedreq.Email, &storedreq.Password)
 	if err != nil {
 		fmt.Printf("Failed to scan row for identifier %s: %v", identifier, err)
-		return storedreq, err
+		return storedreq
 	}
 
-	return storedreq, nil
+	return storedreq
 }

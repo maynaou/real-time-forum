@@ -29,9 +29,10 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	validationErrors := utils.ValidateRegisterFornData(req)
+	fmt.Println(validationErrors)
 	if len(validationErrors) > 0 {
-		handler.ShowErrorPage(w, "Missing required fields", http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(validationErrors); err != nil {
 			fmt.Printf("Failed to encode validation errors: %v", err)
 		}
@@ -40,15 +41,16 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 
 	hashedPass, err := utils.HashPassword(req.Password)
 	if err != nil {
-		handler.ShowErrorPage(w, "Failed to hash password", http.StatusInternalServerError)
+		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 	req.Password = string(hashedPass)
 	_, err = models.CreateUser(req)
-   
+
 	if err != nil {
 		handler.ShowErrorPage(w, "Database error", http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		errorMsg := map[string]string{"error": "Username or email already exists."}
 		if err := json.NewEncoder(w).Encode(errorMsg); err != nil {
 			fmt.Printf("Failed to encode error message: %v", err)
