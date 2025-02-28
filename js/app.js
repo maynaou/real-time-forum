@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
             new RegisterForm();
         } else if (event.target.matches('#showLogin')) {
             new LoginForm();
-        } 
+        }
     });
 });
 
@@ -81,9 +81,9 @@ class LoginForm {
             if (response.ok) {
                 const result = await response.json();
                 console.log(result);
-                
+
                 if (result.authenticated === "true") {
-                    new ForumPage(); 
+                    new ForumPage();
                     return;
                 }
             }
@@ -122,24 +122,24 @@ class LoginForm {
                 body: JSON.stringify(user),
             });
 
-            
+
             if (response.status === 401) {
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
-                return; 
+                return;
             }
             const result = await response.json()
-            
+
             if (!response.ok) {
                 throw new Error(result.message || 'login failed');
             }
             new ForumPage();
         } catch (error) {
-        
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = 'Error: ' + error.message; 
-            messageElement.style.color = 'red'; 
+
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
         }
     }
 }
@@ -186,17 +186,17 @@ class RegisterForm {
             </div>
         `;
         document.getElementById('registerForm').addEventListener('submit', this.handleSubmit.bind(this));
-    }   
-    
+    }
+
     async checkAuth() {
         try {
             const response = await fetch('/api/register', { method: 'GET' });
             if (response.ok) {
                 const result = await response.json();
                 console.log(result);
-                
+
                 if (result.authenticated === "true") {
-                    new ForumPage(); 
+                    new ForumPage();
                     return;
                 }
             }
@@ -224,31 +224,31 @@ class RegisterForm {
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
-                return; 
+                return;
             }
 
             const result = await response.json();
             const errorMessages = Object.entries(result).map(([field, message]) => `${field}: ${message}`);
- 
-            
+
+
             if (!response.ok) {
-                throw new Error( errorMessages|| 'Registration failed');
+                throw new Error(errorMessages || 'Registration failed');
             }
 
-            
+
 
             new LoginForm();
         } catch (error) {
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = 'Error: ' + error.message; 
-            messageElement.style.color = 'red'; 
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
         }
     }
 }
 
 class ForumPage {
     constructor() {
-       
+
         this.category = [
             { name: "Tech", color: "rgb(34, 193, 195)" }, // Teal
             { name: "Finance", color: "rgb(255, 99, 71)" }, // Tomato
@@ -264,7 +264,7 @@ class ForumPage {
         this.likePost = this.likePost.bind(this);
         this.dislikePost = this.dislikePost.bind(this);
         this.init()
-        
+
     }
 
     async init() {
@@ -272,25 +272,25 @@ class ForumPage {
         this.render();
         this.selectedFilter = sessionStorage.getItem('categoryFilter') || '';
         sessionStorage.setItem('currentPage', 'forum');
-        await this.fetchPosts(); 
-        this.hasHighlightedUser = false; 
+        await this.fetchPosts();
+        this.hasHighlightedUser = false;
         this.connectWebSocket();
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8070/ws"); 
+        this.ws = new WebSocket("ws://localhost:8070/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
 
         this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);  
+            const data = JSON.parse(event.data);
             if (data.users) {
-                this.displayUsers(data.users,data.sender,data.receiver);   
+                this.displayUsers(data.users, data.sender, data.receiver);
             } else {
-                this.hasHighlightedUser = true;  
-            }      
-         
+                this.hasHighlightedUser = true;
+            }
+
         };
 
         this.ws.onerror = (error) => {
@@ -300,30 +300,30 @@ class ForumPage {
         this.ws.onclose = () => {
             console.log("WebSocket connection closed.");
         };
-        
+
     }
 
 
-    displayUsers(users,sender,receiver) {
+    displayUsers(users, sender, receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
 
         console.log(sessionStorage.getItem('username'));
-       
+
         console.log(users);
 
         if (users === undefined) {
             return
         }
-        
+
         users.forEach(user => {
             if (user.nickname !== sessionStorage.getItem('username')) {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
-           
-                if ((user.nickname === sender) &&  this.hasHighlightedUser && receiver != "") {
+
+                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != "") {
                     userItem.style.backgroundColor = '#4e34b6'
                 }
 
@@ -331,7 +331,7 @@ class ForumPage {
                     sessionStorage.setItem('user', user.nickname);
                     userItem.addEventListener('click', function () {
                         userItem.style.backgroundColor = ''
-                        new Message(user.nickname,users);
+                        new Message(user.nickname, users);
 
                     });
                 }
@@ -340,8 +340,8 @@ class ForumPage {
             }
         });
     }
-    
-    
+
+
 
     render() {
         const forumContainer = document.getElementById('formContainer');
@@ -359,7 +359,7 @@ class ForumPage {
             </div>
             </div>
             
-            <div id="postsContainer" style="overflow-y: auto; height: 1000px;">
+            <div id="postsContainer" style="overflow-y: auto; height: 610px;">
             </div>
         `;
 
@@ -382,15 +382,20 @@ class ForumPage {
                     'Content-Type': 'application/json',
 
                 },
-            }); 
+            });
             if (!response.ok) throw new Error('Failed to fetch users');
 
             const user = await response.json();
-            console.log("user",user);
-            
+            console.log("user", user);
+
             sessionStorage.setItem('username', user.nickname);
         } catch (error) {
-            console.error('Error fetching users:', error);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -450,12 +455,12 @@ class ForumPage {
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm()
-                return; // Sortir de la fonction
+                return; 
             }
 
             const result = await response.json();
             if (!response.ok) {
-                throw new Error(result.message || 'Failed to fetch posts');
+                throw new Error('Failed to fetch posts');
             }
             this.posts = result.map(post => ({
                 username: post.username,
@@ -471,16 +476,23 @@ class ForumPage {
                 isLiked: post.isLiked,
             }));
 
-
             if (this.selectedFilter) {
                 document.getElementById('categoryFilter').value = this.selectedFilter;
-                this.filterPosts();
+                const filter = this.filterPosts();
+                if (filter.length === 0) {
+                    throw new Error('aucun posts');
+                }
             } else {
                 this.displayPosts();
             }
 
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -576,15 +588,15 @@ class ForumPage {
                 throw new Error('Post ID is undefined');
             }
 
-            
 
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent =  result.message; 
-            messageElement.style.color = 'green'; 
+
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = result.message;
+            messageElement.style.color = 'green';
 
             setTimeout(() => {
                 messageElement.textContent = '';
-            }, 3000); 
+            }, 3000);
 
             this.posts.unshift({ ...result, isLiked: false, isDisliked: false });
             document.getElementById('categoryFilter').value = '';
@@ -594,12 +606,12 @@ class ForumPage {
             this.selectedCategories = [];
             this.renderCategories();
         } catch (error) {
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = 'Error: ' + error.message; 
-            messageElement.style.color = 'red'; 
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
             setTimeout(() => {
                 messageElement.textContent = '';
-            }, 3000); 
+            }, 3000);
         }
 
     }
@@ -619,8 +631,15 @@ class ForumPage {
         } else {
             filteredPosts = this.posts;
         }
+    console.log("filterPosts",filteredPosts);
+    
+        if (filteredPosts.length === 0) {
+            console.log("djsfkdsghkqf")
+            return filteredPosts
+        }else {
+            this.displayPosts(filteredPosts);
+        }
 
-        this.displayPosts(filteredPosts);
     }
 
     displayPosts(postsToDisplay = this.posts) {
@@ -638,13 +657,12 @@ class ForumPage {
 
             postElement.innerHTML = `
                <div class="user-info">
-    <div class="avatar">
-        <img src="../styles/user.png" alt="User Avatar">
-    </div>
-    <h4>${post.username}</h4>
-    <p>${TimeAgo}</p>
-</div>
-  
+               <div class="avatar">
+               <img src="../styles/user.png" alt="User Avatar">
+               </div>
+               <h4>${post.username}</h4>
+               <p>${TimeAgo}</p>
+               </div>
                 <h3>${post.title}</h3>
                 <p>${post.content}</p>
                 <p>${this.getCategoryElements(post.category)}</p>
@@ -667,9 +685,11 @@ class ForumPage {
             postElement.querySelector('.dislike-button').addEventListener('click', () => {
                 this.dislikePost(post.id);
             });
-
             postsContainer.appendChild(postElement);
         });
+        if (postsToDisplay.length > 0) {
+            postsContainer.firstElementChild.scrollIntoView({ behavior: "smooth" });
+        }
     }
 
     async likePost(postId) {
@@ -708,7 +728,12 @@ class ForumPage {
             }
 
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -730,7 +755,6 @@ class ForumPage {
                 return;
             }
 
-            // Récupérer le post mis à jour
             const result = await response.json();
 
             if (!response.ok) {
@@ -747,7 +771,12 @@ class ForumPage {
                 this.displayPosts();
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -765,8 +794,8 @@ class ForumPage {
 
     async handleLogout() {
         try {
-        this.ws.send(JSON.stringify({ content: "logout" }));
-        await new Promise(resolve => setTimeout(resolve, 100));
+            this.ws.send(JSON.stringify({ content: "logout" }));
+            await new Promise(resolve => setTimeout(resolve, 100));
             const response = await fetch('/api/logout', {
                 method: 'GET',
                 headers: {
@@ -776,17 +805,20 @@ class ForumPage {
 
             const result = await response.json();
             if (!response.ok) {
-                throw new Error(result || 'Logout failed');
+                throw new Error('Logout failed');
             }
-
-            alert("You have been logged out.");
             sessionStorage.clear();
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
             this.ws.close();
             new LoginForm();
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 }
@@ -813,8 +845,11 @@ class CommentPage {
     render() {
         const categoryContainer = document.querySelector('.filter-container');
         const postForm = document.getElementById('postForm');
-        const messageElement = document.getElementById('loginMessage'); 
+        const messageElement = document.getElementById('loginMessage');
         const userList = document.getElementById('userListContainer');
+        const postsContaine = document.getElementById('postsContainer');
+        postsContaine.style.overflowY = '';
+        postsContaine.style.height = '';
         if (userList) {
             userList.remove();
         }
@@ -868,10 +903,12 @@ class CommentPage {
                     <button class="like-button" id="add-comment-button-${this.postId}">Ajouter un commentaire</button>
                 </div>
                 </div>
-                 <div id="loginMessage"></div>
-                   <div id="comments-list" style="overflow-y: auto; height: 1000px;" >
+             <div id="loginMessage"></div>
+             <div style="overflow-y: auto; height: 450px;">
+             <div id="comments-list">
+             </div>
             </div>`
-           ;
+            ;
 
         document.getElementById(`add-comment-button-${this.postId}`).addEventListener('click', () => {
             const commentInput = document.getElementById(`comment-input-${this.postId}`);
@@ -920,6 +957,10 @@ class CommentPage {
 
             commentsList.appendChild(commentElement)
         })
+
+        if (this.comments.length > 0) {
+            commentsList.firstElementChild.scrollIntoView({ behavior: "smooth" });
+        }
     }
 
     getCategoryElements(categoriesArray) {
@@ -952,7 +993,7 @@ class CommentPage {
             }
             const result = await response.json();
             if (!response.ok) {
-                throw new Error(result.message || 'Failed to fetch comments');
+                throw new Error('Failed to fetch comments');
             }
 
             this.comments = result.map(comment => ({
@@ -967,7 +1008,12 @@ class CommentPage {
 
             this.renderComments();
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -994,28 +1040,28 @@ class CommentPage {
             const errorMessages = Object.entries(newComment).map(([field, message]) => `${field}: ${message}`);
 
             if (!response.ok) {
-                throw new Error( errorMessages || 'Erreur lors de l\'ajout du commentaire');
+                throw new Error(errorMessages || 'Erreur lors de l\'ajout du commentaire');
             }
 
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = newComment.message; 
-            messageElement.style.color = 'green'; 
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = newComment.message;
+            messageElement.style.color = 'green';
 
-            setTimeout(()=> {
+            setTimeout(() => {
                 messageElement.textContent = ''
-              },3000)
+            }, 3000)
 
             this.comments.unshift({ ...newComment, isLiked: false, isDisliked: false });
 
 
             this.fetchComments();
         } catch (error) {
-            const messageElement = document.getElementById('loginMessage'); 
-            messageElement.textContent = 'Error: ' + error.message; 
-            messageElement.style.color = 'red'; 
-            setTimeout(()=> {
-              messageElement.textContent = ''
-            },3000)
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = ''
+            }, 3000)
         }
     }
 
@@ -1048,7 +1094,12 @@ class CommentPage {
             }
 
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 
@@ -1067,7 +1118,7 @@ class CommentPage {
             }
             const result = await response.json();
             if (!response.ok) {
-                throw new Error(result || 'Logout failed');
+                throw new Error(result || 'Failed to dislike the comment');
             }
 
             const comment = this.comments.find(c => c.id === commentId);
@@ -1077,7 +1128,12 @@ class CommentPage {
                 this.renderComments();
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.textContent = 'Error: ' + error.message;
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                messageElement.textContent = '';
+            }, 3000);
         }
     }
 }
@@ -1090,6 +1146,7 @@ class Message {
     constructor(username) {
         this.username = username;
         this.older = false;
+        this.ws = null;
         this.b = false;
         this.hasHighlightedUser = false;
         sessionStorage.setItem('currentPage', 'messagePage');
@@ -1101,23 +1158,22 @@ class Message {
         this.getMessage()
         this.connectWebSocket();
         this.cookie = this.getCookie("session_id")
-        console.log(this.cookie);
     }
-    
+
     getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        
+
         if (parts.length === 2) {
             return parts.pop().split(';').shift();
         }
-        
-        return null; 
+
+        return null;
     }
 
     render() {
         const forumContainer = document.getElementById('formContainer');
-       forumContainer.innerHTML = ''
+        forumContainer.innerHTML = ''
         forumContainer.innerHTML = `
             <div class="user">
                <h1>Real-Time-Forum</h1>
@@ -1139,6 +1195,7 @@ class Message {
                             <button type="button" class="dislike-button" id="back-button">Back</button>
                             <button type="submit" class="like-button" id="send">Send</button>
                         </div>
+                        <div id="loginMessage"></div>
                     </form>
                 </div>
             </div>
@@ -1150,13 +1207,13 @@ class Message {
             </div>
         `;
 
-  
+
 
         document.getElementById('messageForm').addEventListener('submit', (event) => {
             event.preventDefault(); // Empêche le rechargement de la page
             const commentInput = document.getElementById('messageContent');
             const messageText = commentInput.value.trim(); // Supprime les espaces
-            
+
             if (messageText) {
                 this.addComment(messageText);
                 commentInput.value = '';
@@ -1169,7 +1226,7 @@ class Message {
             new ForumPage();
         });
 
-        document.getElementById('logoutButton').addEventListener('click',this.handleLogout.bind(this));
+        document.getElementById('logoutButton').addEventListener('click', this.handleLogout.bind(this));
 
         const messageBoxContent = document.getElementById('messagesContainer');
         messageBoxContent.addEventListener('scroll', this.debounce(() => {
@@ -1213,7 +1270,7 @@ class Message {
                 throw new Error(errorMessage || 'Message failed to fetch');
             }
 
-    
+
 
             const messages = await response.json();
             console.log(messages);
@@ -1235,7 +1292,7 @@ class Message {
                     this.displaySentMessage(messageData);
                 } else {
                     this.displayReceivedMessage(messageData.content, messageData.created_at);
-                    
+
                 }
                 if (index === messages.length - 1) {
                     lastLoadedTimestamp = messageData.created_at;
@@ -1260,6 +1317,10 @@ class Message {
     }
 
     connectWebSocket() {
+        if (this.ws) {
+            this.ws.close(); // Ferme la connexion existante
+        }
+
         this.ws = new WebSocket("ws://localhost:8070/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
@@ -1267,14 +1328,13 @@ class Message {
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log("receiver", data)
             if (!data.created_at) {
-                this.displayUsers(data.users,data.sender,data.receiver)
+                this.displayUsers(data.users, data.sender, data.receiver)
             } else {
                 this.b = true
                 this.displayReceivedMessage(data.content, data.created_at);
                 console.log(`Received message: ${data.sender}: ${data.content}`);
-                this.hasHighlightedUser = true; 
+                this.hasHighlightedUser = true;
             }
         };
 
@@ -1288,7 +1348,7 @@ class Message {
     }
 
 
-    displayUsers(users,sender,receiver) {
+    displayUsers(users, sender, receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
         users.forEach(user => {
@@ -1297,10 +1357,10 @@ class Message {
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
-                console.log(this.hasHighlightedUser,"khfjksdhfhjsk",sender);
-                if ((user.nickname  === sender) && this.hasHighlightedUser && receiver != '') {
-                         userItem.style.backgroundColor = '#4e34b6'
-                         this.hasHighlightedUser = false; 
+                console.log(this.hasHighlightedUser, "khfjksdhfhjsk", sender);
+                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '') {
+                    userItem.style.backgroundColor = '#4e34b6'
+                    this.hasHighlightedUser = false;
                 }
 
                 if (user.online) {
@@ -1317,18 +1377,17 @@ class Message {
 
 
 
-   async addComment(message) {
+    async addComment(message) {
         if (this.ws.readyState === WebSocket.OPEN) {
             let y = this.getCookie("session_id")
-            
-            if (this.cookie !== y) {                  
-                this.ws.send(JSON.stringify({ cookie: this.cookie })); 
+
+            if (this.cookie !== y) {
+                this.ws.send(JSON.stringify({ cookie: this.cookie }));
                 const forumContainer = document.getElementById('formContainer');
                 forumContainer.innerHTML = '';
                 new LoginForm();
                 return;
             }
-
             const messageData = {
                 receiver: this.username,
                 content: message,
@@ -1336,8 +1395,21 @@ class Message {
             };
 
             this.ws.send(JSON.stringify(messageData));
-            this.b = true;
-            this.displaySentMessage(messageData);
+            this.ws.onmessage = (event) => {
+                const dataa = JSON.parse(event.data);
+                console.log(dataa);
+                if (dataa.message !== "" ) {
+                    const messageElement = document.getElementById('loginMessage');
+                    messageElement.textContent = dataa.message;
+                    messageElement.style.color = 'red';
+                    setTimeout(() => {
+                        messageElement.textContent = '';
+                    }, 3000);
+                } else {
+                    this.b = true;
+                    this.displaySentMessage(messageData);
+                } 
+            };
         }
     }
 
@@ -1349,7 +1421,7 @@ class Message {
         const options = {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false 
+            hour12: false
         };
 
         const formattedTime = createdAt.toLocaleTimeString([], options);
@@ -1360,7 +1432,7 @@ class Message {
         } else {
             messagesContainer.prepend(messageItem);
         }
-
+            messagesContainer.lastElementChild.scrollIntoView({ behavior: "smooth" });
     }
 
     displayReceivedMessage(message, time) {
@@ -1371,7 +1443,7 @@ class Message {
         const options = {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false // Utiliser le format 24 heures
+            hour12: false 
         };
 
         // Formater le temps
@@ -1383,12 +1455,14 @@ class Message {
         } else {
             messagesContainer.prepend(messageItem);
         }
+
+        messagesContainer.lastElementChild.scrollIntoView({ behavior: "smooth" });
     }
 
     async handleLogout() {
         try {
-        this.ws.send(JSON.stringify({ content: "logout" }));
-        await new Promise(resolve => setTimeout(resolve, 100));
+            this.ws.send(JSON.stringify({ content: "logout" }));
+            await new Promise(resolve => setTimeout(resolve, 100));
             const response = await fetch('/api/logout', {
                 method: 'GET',
                 headers: {
@@ -1398,7 +1472,7 @@ class Message {
 
             const result = await response.json();
             if (!response.ok) {
-                throw new Error(result || 'Logout failed');
+                throw new Error('Logout failed');
             }
 
             alert("You have been logged out.");
@@ -1417,11 +1491,11 @@ class Message {
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    
+
     if (parts.length === 2) {
         return parts.pop().split(';').shift();
     }
-    
+
     return null; // Cookie not found
 }
 

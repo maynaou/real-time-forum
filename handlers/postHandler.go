@@ -3,9 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	models "handler/DataBase/Models"
 	utils "handler/Utils"
-	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -13,9 +14,9 @@ import (
 func Post(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		createPost(w, r)
-	}else if r.Method == http.MethodGet {
+	} else if r.Method == http.MethodGet {
 		getPosts(w, r)
-	}else {
+	} else {
 		ShowErrorPage(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -52,8 +53,6 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.ID, err = models.CreatePost(post, user)
-
-
 	if err != nil {
 		fmt.Printf("failed to marshal post data: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -69,9 +68,9 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		"category":   post.Categories,
 		"created_at": post.CreatedAt,
 		"comments":   0,
-		"likes":      0, 
-		"dislikes":   0, 
-		"message" : "post successful",
+		"likes":      0,
+		"dislikes":   0,
+		"message":    "post successful",
 	}
 
 	data, err := json.Marshal(response)
@@ -83,7 +82,6 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(data) // Envoyer le post créé en réponse
-
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +91,6 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	posts, err := models.GetAllPosts(user.ID)
-
 	if err != nil {
 		fmt.Printf("Failed to marshal posts: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

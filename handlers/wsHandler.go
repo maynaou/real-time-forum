@@ -48,7 +48,6 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 	OnlineConnections.Mutex.Lock()
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
-	fmt.Println("hhh", messageData.Cookie)
 	for {
 		GetActiveUsers(w, user)
 
@@ -63,7 +62,6 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error unmarshalling message:", err)
 			continue
 		}
-		fmt.Println("hhh", messageData.Cookie)
 		if messageData.Cookie != "" {
 			a := models.DeleteSession(messageData.Cookie)
 			if a == nil {
@@ -77,6 +75,24 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		receiverConnections, ok := OnlineConnections.Clients[messageData.Receiver]
+
+		if !ok {
+			log.Printf("Receiver %s is not online", messageData.Receiver)
+			responseMessage := map[string]string{
+				"sender":  user.Nickname,
+				"message": messageData.Receiver + " is not online",
+			}
+
+			message, _ := json.Marshal(responseMessage)
+			err := conn.WriteMessage(websocket.TextMessage, message)
+			if err != nil {
+				log.Println("Error sending notification to sender:", err)
+			}
+
+			break
+		}
+
 		if err := models.CreateMessage(user.Nickname, messageData); err != nil {
 			log.Println("Error saving message:", err)
 			break
@@ -84,7 +100,29 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Received message from %s to %s: %s %s", user.Nickname, messageData.Receiver, messageData.Message, messageData.CreatedAt)
 
-		receiverConnections, ok := OnlineConnections.Clients[messageData.Receiver]
+		fmt.Println("remote address", conn.RemoteAddr().String())
+
+		if ok {
+			for _, receiverConnection := range receiverConnections {
+				responseMessage := map[string]string{
+					"sender":     user.Nickname,
+					"content":    messageData.Message,
+					"created_at": messageData.CreatedAt,
+				}
+				message, _ := json.Marshal(responseMessage)
+				err := receiverConnection.WriteMessage(websocket.TextMessage, message)
+				if err != nil {
+					log.Println("error sending message to receiver:", err)
+				}
+			}
+		}
+
+		if err := models.CreateMessage(user.Nickname, messageData); err != nil {
+			log.Println("Error saving message:", err)
+			break
+		}
+
+		log.Printf("Received message from %s to %s: %s %s", user.Nickname, messageData.Receiver, messageData.Message, messageData.CreatedAt)
 
 		fmt.Println("remote addres", conn.RemoteAddr().String())
 		if ok {
@@ -100,8 +138,6 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 					log.Println("error sending message")
 				}
 			}
-		} else {
-			log.Printf("Receiver %s is not online", messageData.Receiver)
 		}
 	}
 
