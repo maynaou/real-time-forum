@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const currentPage = sessionStorage.getItem('currentPage')
-
+    console.log("HHHHHHHHHH");
+    
     navigateToPage(currentPage)
 
     document.body.addEventListener('click', function (event) {
@@ -16,6 +17,8 @@ function navigateToPage(page) {
     const postId = sessionStorage.getItem('post_id')
     const posts = JSON.parse(sessionStorage.getItem('posts'));
     const user = sessionStorage.getItem('user')
+    console.log("hhhhh",user);
+    
     switch (page) {
         case 'login':
             new LoginForm();
@@ -278,7 +281,7 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8070/ws");
+        this.ws = new WebSocket("ws://localhost:8090/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -327,14 +330,14 @@ class ForumPage {
                     userItem.style.backgroundColor = '#4e34b6'
                 }
 
-                if (user.online) {
-                    sessionStorage.setItem('user', user.nickname);
-                    userItem.addEventListener('click', function () {
+                    
+                    userItem.addEventListener('click',() => {
                         userItem.style.backgroundColor = ''
-                        new Message(user.nickname, users);
+                        sessionStorage.setItem('user', user.nickname);
+                        this.ws.send(JSON.stringify({content: 'event' }));
+                        new Message(user.nickname);
 
                     });
-                }
 
                 userList.appendChild(userItem);
             }
@@ -805,7 +808,7 @@ class ForumPage {
 
             const result = await response.json();
             if (!response.ok) {
-                throw new Error('Logout failed');
+                throw new Error(result || 'Logout failed');
             }
             sessionStorage.clear();
             const forumContainer = document.getElementById('formContainer');
@@ -1146,7 +1149,6 @@ class Message {
     constructor(username) {
         this.username = username;
         this.older = false;
-        this.ws = null;
         this.b = false;
         this.hasHighlightedUser = false;
         sessionStorage.setItem('currentPage', 'messagePage');
@@ -1223,6 +1225,7 @@ class Message {
         });
 
         document.getElementById('back-button').addEventListener('click', () => {
+            this.ws.send(JSON.stringify({content: 'event' }));
             new ForumPage();
         });
 
@@ -1317,11 +1320,7 @@ class Message {
     }
 
     connectWebSocket() {
-        if (this.ws) {
-            this.ws.close(); // Ferme la connexion existante
-        }
-
-        this.ws = new WebSocket("ws://localhost:8070/ws");
+        this.ws = new WebSocket("ws://localhost:8090/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -1333,8 +1332,17 @@ class Message {
             } else {
                 this.b = true
                 this.displayReceivedMessage(data.content, data.created_at);
-                console.log(`Received message: ${data.sender}: ${data.content}`);
+                console.log(`Received message: ${data.sender}: ${data.content} hhhhhhhhhhhhhhhhhhh`);
                 this.hasHighlightedUser = true;
+            }
+
+            let y = this.getCookie("session_id")
+            if (this.cookie !== y) {
+                this.ws.send(JSON.stringify({ cookie: this.cookie }));
+                const forumContainer = document.getElementById('formContainer');
+                forumContainer.innerHTML = '';
+                new LoginForm();
+                return;
             }
         };
 
@@ -1348,7 +1356,7 @@ class Message {
     }
 
 
-    displayUsers(users, sender, receiver) {
+        displayUsers(users, sender, receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
         users.forEach(user => {
@@ -1357,19 +1365,16 @@ class Message {
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
-                console.log(this.hasHighlightedUser, "khfjksdhfhjsk", sender);
-                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '') {
+                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '' ) {
                     userItem.style.backgroundColor = '#4e34b6'
                     this.hasHighlightedUser = false;
                 }
-
-                if (user.online) {
-                    sessionStorage.setItem('user', user.nickname);
-                    userItem.addEventListener('click', function () {
+                    
+                    userItem.addEventListener('click', () =>{
+                        sessionStorage.setItem('user', user.nickname);
+                        this.ws.send(JSON.stringify({content: 'event' }));
                         new Message(user.nickname);
-
                     });
-                }
                 userList.appendChild(userItem);
             }
         });
@@ -1380,7 +1385,6 @@ class Message {
     async addComment(message) {
         if (this.ws.readyState === WebSocket.OPEN) {
             let y = this.getCookie("session_id")
-
             if (this.cookie !== y) {
                 this.ws.send(JSON.stringify({ cookie: this.cookie }));
                 const forumContainer = document.getElementById('formContainer');
@@ -1395,21 +1399,9 @@ class Message {
             };
 
             this.ws.send(JSON.stringify(messageData));
-            this.ws.onmessage = (event) => {
-                const dataa = JSON.parse(event.data);
-                console.log(dataa);
-                if (dataa.message !== "" ) {
-                    const messageElement = document.getElementById('loginMessage');
-                    messageElement.textContent = dataa.message;
-                    messageElement.style.color = 'red';
-                    setTimeout(() => {
-                        messageElement.textContent = '';
-                    }, 3000);
-                } else {
+
                     this.b = true;
                     this.displaySentMessage(messageData);
-                } 
-            };
         }
     }
 
@@ -1533,4 +1525,5 @@ function timeAgo(date) {
     if (months < 12) return `${months} month${months !== 1 ? 's' : ''} ago`;
     return `${years} year${years !== 1 ? 's' : ''} ago`;
 }
+
 
