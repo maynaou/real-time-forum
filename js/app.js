@@ -251,7 +251,7 @@ class RegisterForm {
 
 class ForumPage {
     constructor() {
-
+        this.ws = null; 
         this.category = [
             { name: "Tech", color: "rgb(34, 193, 195)" }, // Teal
             { name: "Finance", color: "rgb(255, 99, 71)" }, // Tomato
@@ -281,15 +281,16 @@ class ForumPage {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8090/ws");
+        this.ws = new WebSocket("ws://localhost:8066/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
-
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.users) {
-                this.displayUsers(data.users, data.sender, data.receiver);
+
+                    this.displayUsers(data.users, data.sender, data.receiver);
+            
             } else {
                 this.hasHighlightedUser = true;
             }
@@ -310,35 +311,46 @@ class ForumPage {
     displayUsers(users, sender, receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
+    
+        // Separate online and offline users
+        const onlineUsers = users.filter(user => user.online);
+        const offlineUsers = users.filter(user => !user.online);
+    
+        // Sort users alphabetically
+        const sortedOnlineUsers = onlineUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+        const sortedOfflineUsers = offlineUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+    
+        // Combine sorted arrays
+        const sortedUsers = [...sortedOnlineUsers, ...sortedOfflineUsers];
+         console.log("ppp",sortedUsers);
+         
 
-        console.log(sessionStorage.getItem('username'));
-
-        console.log(users);
-
-        if (users === undefined) {
-            return
-        }
-
-        users.forEach(user => {
+     const senderUser = sortedUsers.find(user => user.nickname === sender && this.hasHighlightedUser && receiver !== "");
+      if (senderUser) {
+        sortedUsers.splice(sortedUsers.indexOf(senderUser), 1);
+        sortedUsers.unshift(senderUser);
+      }
+        // Display users
+        sortedUsers.forEach(user => {
             if (user.nickname !== sessionStorage.getItem('username')) {
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
-
-                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != "") {
-                    userItem.style.backgroundColor = '#4e34b6'
+    
+                if ((user.nickname === sender) && this.hasHighlightedUser && receiver !== "") {
+                    userItem.style.backgroundColor = '#4e34b6';
+                    this.hasHighlightedUser = false;
                 }
-
-                    
-                    userItem.addEventListener('click',() => {
-                        userItem.style.backgroundColor = ''
-                        sessionStorage.setItem('user', user.nickname);
-                        this.ws.send(JSON.stringify({content: 'event' }));
-                        new Message(user.nickname);
-
-                    });
-
+    
+                userItem.addEventListener('click', () => {
+                    userItem.style.backgroundColor = '';
+                    sessionStorage.setItem('user', user.nickname);
+                    this.ws.send(JSON.stringify({ content: 'event' }));
+                    console.log(user.nickname);
+                    new Message(user.nickname);
+                });
+    
                 userList.appendChild(userItem);
             }
         });
@@ -813,7 +825,10 @@ class ForumPage {
             sessionStorage.clear();
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
-            this.ws.close();
+            if (this.ws) {
+                this.ws.close();
+                this.ws = null;
+            }
             new LoginForm();
         } catch (error) {
             const messageElement = document.getElementById('loginMessage');
@@ -1145,8 +1160,10 @@ let lastLoadedTimestamp = null;
 
 let isFetching = false
 
+
 class Message {
     constructor(username) {
+        this.ws = null; 
         this.username = username;
         this.older = false;
         this.b = false;
@@ -1276,7 +1293,6 @@ class Message {
 
 
             const messages = await response.json();
-            console.log(messages);
 
             const messagesContainer = document.getElementById('messagesContainer')
 
@@ -1320,7 +1336,7 @@ class Message {
     }
 
     connectWebSocket() {
-        this.ws = new WebSocket("ws://localhost:8090/ws");
+        this.ws = new WebSocket("ws://localhost:8066/ws");
         this.ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -1328,11 +1344,12 @@ class Message {
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (!data.created_at) {
-                this.displayUsers(data.users, data.sender, data.receiver)
+                this.displayUsers(data.users, data.sender, data.receiver,data.counter)
             } else {
-                this.b = true
-                this.displayReceivedMessage(data.content, data.created_at);
-                console.log(`Received message: ${data.sender}: ${data.content} hhhhhhhhhhhhhhhhhhh`);
+                if (data.sender === sessionStorage.getItem('user')) {
+                    this.b = true
+                    this.displayReceivedMessage(data.content, data.created_at);
+                }
                 this.hasHighlightedUser = true;
             }
 
@@ -1359,15 +1376,36 @@ class Message {
         displayUsers(users, sender, receiver) {
         const userList = document.getElementById('userList');
         userList.innerHTML = '';
-        users.forEach(user => {
-            if (user.nickname !== sessionStorage.getItem('username')) {
+
+        
+        const onlineUsers = users.filter(user => user.online);
+        const offlineUsers = users.filter(user => !user.online);
+    
+        // Sort users alphabetically
+        const sortedOnlineUsers = onlineUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+        const sortedOfflineUsers = offlineUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+    
+        // Combine sorted arrays
+        const sortedUsers = [...sortedOnlineUsers, ...sortedOfflineUsers];
+        
+ 
+       const senderUser = sortedUsers.find(user => user.nickname === sender && receiver !== "");
+       if (senderUser) {
+          sortedUsers.splice(sortedUsers.indexOf(senderUser), 1);
+          sortedUsers.unshift(senderUser);
+       }
+
+      sortedUsers.forEach(user => {
+            if (user.nickname !== sessionStorage.getItem('username') && user.nickname !== sessionStorage.getItem('user')) {
+               console.log("sender: ",sender,", username : ",user.nickname,receiver,this.hasHighlightedUser);
+               
                 const userItem = document.createElement('div');
                 userItem.className = 'user-item';
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
+
                 if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '' ) {
                     userItem.style.backgroundColor = '#4e34b6'
-                    this.hasHighlightedUser = false;
                 }
                     
                     userItem.addEventListener('click', () =>{
@@ -1397,11 +1435,10 @@ class Message {
                 content: message,
                 created_at: new Date().toISOString(),
             };
-
+            
             this.ws.send(JSON.stringify(messageData));
-
-                    this.b = true;
-                    this.displaySentMessage(messageData);
+            this.b = true;
+            this.displaySentMessage(messageData);
         }
     }
 
@@ -1471,7 +1508,10 @@ class Message {
             sessionStorage.clear();
             const forumContainer = document.getElementById('formContainer');
             forumContainer.innerHTML = '';
-            this.ws.close();
+            if (this.ws) {
+                this.ws.close();
+                this.ws = null;
+            }
             new LoginForm();
         } catch (error) {
             alert('Error: ' + error.message);
@@ -1479,20 +1519,6 @@ class Message {
     }
 }
 
-
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-
-    if (parts.length === 2) {
-        return parts.pop().split(';').shift();
-    }
-
-    return null; // Cookie not found
-}
-
-// Example usage
-const myCookie = getCookie('session_id');
 
 
 

@@ -30,6 +30,8 @@ var upgrader = websocket.Upgrader{
 
 var messageData models.MessageData
 
+
+
 func WebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -45,13 +47,13 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+
 	OnlineConnections.Mutex.Lock()
 	OnlineConnections.Clients[user.Nickname] = append(OnlineConnections.Clients[user.Nickname], conn)
 	OnlineConnections.Mutex.Unlock()
 
 	var temp []*websocket.Conn
-
-	fmt.Println(OnlineConnections)
 
 	for {
 		GetActiveUsers(w, user)
@@ -92,10 +94,10 @@ func WebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		receiverConnections, ok := OnlineConnections.Clients[messageData.Receiver]
-
+		messageData.Counter++
 		if ok {
 			for _, receiverConnection := range receiverConnections {
-				responseMessage := map[string]string{
+				responseMessage := map[string]interface{}{
 					"sender":     user.Nickname,
 					"content":    messageData.Message,
 					"created_at": messageData.CreatedAt,
@@ -170,6 +172,7 @@ func GetActiveUsers(w http.ResponseWriter, user models.RegisterRequest) {
 		"sender":   user.Nickname,
 		"users":    users,
 		"receiver": messageData.Receiver,
+		"counter":messageData.Counter,
 	}
 
 	message, err := json.Marshal(response)

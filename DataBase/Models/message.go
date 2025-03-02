@@ -14,6 +14,7 @@ type MessageData struct {
 	CreatedAt string `json:"created_at"`
 	Type      string `json:"type"`
 	Cookie    string `json:"cookie"`
+	Counter   int    `json:"counter"`
 }
 
 func CreateMessage(username string, messageData MessageData) error {
