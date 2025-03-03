@@ -251,6 +251,8 @@ class RegisterForm {
 
 class ForumPage {
     constructor() {
+        this.storedReceivers =  sessionStorage.getItem('receivers');
+        this.receivers = this.storedReceivers ? JSON.parse(this.storedReceivers) : []; 
         this.ws = null; 
         this.category = [
             { name: "Tech", color: "rgb(34, 193, 195)" }, // Teal
@@ -338,16 +340,25 @@ class ForumPage {
                 userItem.classList.add(user.online ? 'online' : 'offline');
                 userItem.innerText = user.nickname;
     
-                if ((user.nickname === sender) && this.hasHighlightedUser && receiver !== "") {
+                if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '' ) {
+                    if (!this.receivers.includes(sender)) {
+                        this.receivers.push(sender);
+                    }
+                }
+
+                if (this.receivers.includes(user.nickname)) {
                     userItem.style.backgroundColor = '#4e34b6';
-                    this.hasHighlightedUser = false;
+                    userItem.style.fontWeight = 'bold';
+                    sessionStorage.setItem('receivers', JSON.stringify(this.receivers)); 
                 }
     
                 userItem.addEventListener('click', () => {
-                    userItem.style.backgroundColor = '';
+                    if (this.receivers.includes(user.nickname)) {
+                        this.receivers.splice(this.receivers.indexOf(user.nickname), 1);
+                    } 
+                    sessionStorage.setItem('receivers', JSON.stringify(this.receivers));
                     sessionStorage.setItem('user', user.nickname);
                     this.ws.send(JSON.stringify({ content: 'event' }));
-                    console.log(user.nickname);
                     new Message(user.nickname);
                 });
     
@@ -1163,6 +1174,8 @@ let isFetching = false
 
 class Message {
     constructor(username) {
+        this.storedReceivers =  sessionStorage.getItem('receivers');
+        this.receivers = this.storedReceivers ? JSON.parse(this.storedReceivers) : []; 
         this.ws = null; 
         this.username = username;
         this.older = false;
@@ -1344,7 +1357,7 @@ class Message {
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (!data.created_at) {
-                this.displayUsers(data.users, data.sender, data.receiver,data.counter)
+                this.displayUsers(data.users, data.sender, data.receiver)
             } else {
                 if (data.sender === sessionStorage.getItem('user')) {
                     this.b = true
@@ -1395,6 +1408,12 @@ class Message {
           sortedUsers.unshift(senderUser);
        }
 
+
+       
+
+        console.log("iiiii",this.receivers);
+        
+
       sortedUsers.forEach(user => {
             if (user.nickname !== sessionStorage.getItem('username') && user.nickname !== sessionStorage.getItem('user')) {
                console.log("sender: ",sender,", username : ",user.nickname,receiver,this.hasHighlightedUser);
@@ -1405,10 +1424,24 @@ class Message {
                 userItem.innerText = user.nickname;
 
                 if ((user.nickname === sender) && this.hasHighlightedUser && receiver != '' ) {
-                    userItem.style.backgroundColor = '#4e34b6'
+                    if (!this.receivers.includes(sender)) {
+                        this.receivers.push(sender);
+                    }
+                }
+
+                if (this.receivers.includes(user.nickname)) {
+                    userItem.style.backgroundColor = '#4e34b6';
+                    userItem.style.fontWeight = 'bold';
+                    sessionStorage.setItem('receivers', JSON.stringify(this.receivers)); 
                 }
                     
                     userItem.addEventListener('click', () =>{
+
+                    if (this.receivers.includes(user.nickname)) {
+                        this.receivers.splice(this.receivers.indexOf(user.nickname), 1);
+                    } 
+                    sessionStorage.setItem('receivers', JSON.stringify(this.receivers));
+                        
                         sessionStorage.setItem('user', user.nickname);
                         this.ws.send(JSON.stringify({content: 'event' }));
                         new Message(user.nickname);
